@@ -9,9 +9,9 @@ import {UserRepository} from '../../infrastructure/repositories/userRepository';
 import {UserService} from '../../application/services/userService';
 
 const donationRepository = new DonationRepository();
-const donationRequestService = new DonationRequestService(donationRepository);
-
 const userRepository = new UserRepository();
+
+const donationRequestService = new DonationRequestService(donationRepository, userRepository);
 const userService = new UserService(userRepository);
 
 const notificationService = new NotificationService();

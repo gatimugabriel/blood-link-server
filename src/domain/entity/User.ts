@@ -94,7 +94,7 @@ export class Token {
     user!: User;
 
     // User --> Donation Requests (One user can have many donation requests)
-    @OneToMany(() => DonationRequest, donationRequest => donationRequest.requester)
+    @OneToMany(() => DonationRequest, donationRequest => donationRequest.user)
     donationRequests!: DonationRequest[];
 }
 

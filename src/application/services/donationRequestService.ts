@@ -20,30 +20,25 @@ export class DonationRequestService {
         let dataToSave
         console.log("dto -> ", dto);
 
-
         requestLocationPoint = createPoint(dto.requestLocation.latitude, dto.requestLocation.longitude)
 
         if (dto.requestingFor !== "" && dto.requestingFor === "other") {
             dataToSave = { ...dto, requestLocation: requestLocationPoint, user: dto.userId, requestFor: dto.requestingFor }
-
-        } else {            
+        } else {
             // Check if the user has any open requests for themselves
             const existingRequests: DonationRequest[] = await this.donationRepository.findOpenRequestsByUser(dto.userId);
-            console.log("existingRequests", existingRequests);
-
-            
             const hasOpenSelfRequest = existingRequests.some(item =>
                 item && item.requestFor === "self"
             );
             if (hasOpenSelfRequest) {
-                throw new Error("You already have an open donation request. Please hang tight as we reach more donors...");
+                throw new Error("You already have an open donation request for yourself. Please hang tight as we reach more donors / request for another user");
             }
 
             const user = await this.userRepo.findByID(dto.userId);
             dataToSave = { ...dto, requestLocation: requestLocationPoint, bloodGroup: user?.bloodGroup, user: dto.userId }
         }
 
-        console.log(dataToSave);
+        console.log("dataToSave", dataToSave);
 
 
         //  Save request to DB

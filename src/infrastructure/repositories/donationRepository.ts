@@ -67,7 +67,7 @@ export class DonationRepository {
               AND "id" != $5
               AND NOT EXISTS (SELECT 1
                               FROM "donation_request"
-                              WHERE "donation_request"."requesterId" = "user"."id"
+                              WHERE "donation_request"."userId" = "user"."id"
                                 AND "donation_request"."status" = 'open');
         `;
 
@@ -96,9 +96,6 @@ export class DonationRepository {
 
     // Find any open donation request by user
     async findOpenRequestsByUser(userID: string): Promise<DonationRequest[]> {
-        console.log(userID);
-
-
         const query = `
             SELECT *
             FROM "donation_request"
