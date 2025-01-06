@@ -1,3 +1,4 @@
+//  saple test data
 export const users = [
     {
         "firstName": "John",

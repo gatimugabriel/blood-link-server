@@ -52,32 +52,90 @@ export class DonationRepository {
     }
 
     // Find nearby possible donors
-    async findNearbyDonors(latitude: number, longitude: number, radiusInMeters: number, bloodGroup: BloodType, requesterID: string): Promise<User[]> {
-        const query = `
+    async findNearbyDonors(latitude: number, longitude: number, radiusInMeters: number, bloodGroup: BloodType, userId: string): Promise<User[]> {
+        let compatibleBloodTypes: string[]
+
+        switch (bloodGroup) {
+            case "AB+": // univeral recipient
+                compatibleBloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+                break;
+            case 'AB-':
+                compatibleBloodTypes = ['A-', 'B-', 'AB-', 'O-'];
+                break;
+            case 'A+':
+                compatibleBloodTypes = ['A+', 'A-', 'O+', 'O-'];
+                break;
+            case 'A-':
+                compatibleBloodTypes = ['A-', 'O-'];
+                break;
+            case 'B+':
+                compatibleBloodTypes = ['B+', 'B-', 'O+', 'O-'];
+                break;
+            case 'B-':
+                compatibleBloodTypes = ['B-', 'O-'];
+                break;
+            case 'O+':
+                compatibleBloodTypes = ['O+', 'O-'];
+                break;
+            case 'O-':  // O- can only receive O-
+                compatibleBloodTypes = ['O-'];
+                break;
+            default:
+                throw new Error('Invalid blood type');
+        }
+
+        const query2 = `
             SELECT *
             FROM "user"
             WHERE ST_DWithin(
                     "lastKnownLocation"::geography,
                     ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
                     $3
-                  )
-              AND ("bloodGroup" = $4 OR "bloodGroup" = 'O-' OR "bloodGroup" = 'O+')
-              AND "status" = 'active'
-              AND ("lastDonationDate" IS NULL OR "lastDonationDate" < NOW() - INTERVAL '56 days')
-              AND "id" != $5
-              AND NOT EXISTS (SELECT 1
-                              FROM "donation_request"
-                              WHERE "donation_request"."userId" = "user"."id"
-                                AND "donation_request"."status" = 'open');
+                )
+            AND "bloodGroup" = ANY($4)
+            AND "status" = 'active'
+            AND ("lastDonationDate" IS NULL OR "lastDonationDate" < NOW() - INTERVAL '56 days')
+            AND "id" != $5
+            AND NOT EXISTS (
+                SELECT 1
+                FROM "donation_request"
+                WHERE "donation_request"."userId" = "user"."id"
+                AND "donation_request"."status" = 'open'
+                AND "donation_request"."requestFor" = 'self'
+            );
         `;
 
+        const query = `
+        SELECT *,
+        ST_Distance(
+            "lastKnownLocation"::geography,
+            ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+        ) AS distance_meters
+        FROM "user"
+        WHERE ST_DWithin(
+                "lastKnownLocation"::geography,
+                ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+                $3
+            )
+        AND "bloodGroup" = ANY($4)
+        AND "status" = 'active'
+        AND ("lastDonationDate" IS NULL OR "lastDonationDate" < NOW() - INTERVAL '56 days')
+        AND "id" != $5
+        AND NOT EXISTS (
+            SELECT 1
+            FROM "donation_request"
+            WHERE "donation_request"."userId" = "user"."id"
+            AND "donation_request"."status" = 'open'
+            AND "donation_request"."requestFor" = 'self'
+        )
+        ORDER BY distance_meters;
+    `;
+
         try {
-            const result = await this.repository.query(query, [longitude, latitude, radiusInMeters, bloodGroup, requesterID]);
+            const result = await this.repository.query(query, [longitude, latitude, radiusInMeters, compatibleBloodTypes, userId]);
 
             // Convert raw results to User entities
             return result.map((row: any) => {
-                console.log("Row", row.email, row.bloodGroup)
-
                 const user = new User();
                 Object.assign(user, row);
                 return user;
