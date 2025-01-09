@@ -25,6 +25,10 @@ export class UserRepository {
         return await this.repository.save(user);
     }
 
+    async saveToken(userID: string, token: string, tokenType: string): Promise<any>{
+        return await this.tokenRepository.save({ userID, token, type: tokenType });
+    }
+
     async deleteUser(userID: string): Promise<any> {
         return await this.repository.delete({ id: userID });
     }

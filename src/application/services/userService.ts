@@ -29,4 +29,8 @@ export class UserService {
         }
         return await this.userRepository.findByID(userID);
     }
+
+    async saveToken(userID: string, token: string, tokenType: string) {
+        return await this.userRepository.saveToken(userID, token, tokenType);
+    }
 }

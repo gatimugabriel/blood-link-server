@@ -79,7 +79,7 @@ export class Token {
     @Column()
     token!: string;
 
-    @Column({type: "enum", enum: ["refresh", "verification", "password_reset"], default: "refresh"})
+    @Column({type: "enum", enum: ["refresh", "verification", "password_reset", "fcm"], default: "refresh"})
     type!: string;
 
     @CreateDateColumn()

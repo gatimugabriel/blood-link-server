@@ -1,6 +1,6 @@
 import { Worker, Job } from 'bullmq';
 import { NotificationService } from '../../application/services/notificationService';
-import { redisConfig } from '../../config/database';
+import { redisConfig } from '../../config/database.config';
 
 const notificationService = new NotificationService();
 

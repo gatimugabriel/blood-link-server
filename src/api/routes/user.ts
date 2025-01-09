@@ -9,8 +9,10 @@ const {requireBody, validate, validateRangeBody} = validationMiddleware;
 
 router.post('/insertMany', userController.insertManyUsers.bind(userController))
 
-
 router.use(verifyToken("access"))
+// authenticate all routes below
+
+router.post('/fcm-token', userController.saveFcmToken.bind(userController))
 
 // router.route('/set-address').post(
 //     [

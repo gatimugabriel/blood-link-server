@@ -18,8 +18,7 @@ export class DonationRequestService {
     async createNewDonationRequest(dto: CreateDonationRequestDto): Promise<DonationRequest> {
         let requestLocationPoint
         let dataToSave
-        console.log("dto -> ", dto);
-
+    
         requestLocationPoint = createPoint(dto.requestLocation.latitude, dto.requestLocation.longitude)
 
         if (dto.requestingFor !== "" && dto.requestingFor === "other") {
@@ -37,9 +36,6 @@ export class DonationRequestService {
             const user = await this.userRepo.findByID(dto.userId);
             dataToSave = { ...dto, requestLocation: requestLocationPoint, bloodGroup: user?.bloodGroup, user: dto.userId }
         }
-
-        console.log("dataToSave", dataToSave);
-
 
         //  Save request to DB
         const donationRequest = new DonationRequest();
