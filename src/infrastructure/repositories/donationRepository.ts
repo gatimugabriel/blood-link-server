@@ -1,8 +1,8 @@
-import { Repository } from "typeorm";
-import { User } from "../../domain/entity/User";
-import { DB } from "../database/data-source";
-import { DonationRequest } from "../../domain/entity/DonationRequest";
-import { BloodType } from "../../domain/value-objects/bloodType";
+import {Repository} from "typeorm";
+import {User} from "../../domain/entity/User";
+import {DB} from "../database/data-source";
+import {DonationRequest} from "../../domain/entity/DonationRequest";
+import {BloodType} from "../../domain/value-objects/bloodType";
 
 /*--- Contains all the database operations related to the DonationRequest entity ---*/
 export class DonationRepository {
@@ -14,41 +14,44 @@ export class DonationRepository {
 
     // Create a new donation request
     async createDonationRequest(request: DonationRequest): Promise<DonationRequest> {
-        return this.repository.save(request);
+        return await this.repository.save(request);
     }
 
     // Find request
     async findRequest(requestID: string): Promise<DonationRequest[]> {
-        return this.repository.find({ where: { id: requestID } });
+        return await this.repository.find({where: {id: requestID}});
     }
 
     // Find all donation requests
     async findAllDonationRequests(): Promise<DonationRequest[]> {
-        return this.repository.find();
+        return await this.repository.find();
     }
 
     // Find all open donation requests
     async findOpenDonationRequests(offset: number, limit: number): Promise<[DonationRequest[], number]> {
-        return this.repository.findAndCount({
-            where: { status: 'open' },
-            skip: offset,
-            take: limit,
-        });
+        return await this.repository.createQueryBuilder('donationRequest')
+            .select(['donationRequest', 'user.id'])
+            .leftJoin('donationRequest.user', 'user')
+            .where('donationRequest.status = :status', {status: 'open'})
+            .skip(offset)
+            .take(limit)
+            .orderBy('donationRequest.createdAt', 'DESC')
+            .getManyAndCount();
     }
 
     // Find a donation request by ID
     async findDonationRequestById(requestID: string): Promise<DonationRequest | null> {
-        return this.repository.findOne({ where: { id: requestID } })
+        return await this.repository.findOne({where: {id: requestID}})
     }
 
     // Update a donation request
     async updateDonationRequest(request: DonationRequest): Promise<DonationRequest> {
-        return this.repository.save(request);
+        return await this.repository.save(request);
     }
 
     // Delete a donation request
     async deleteDonationRequest(requestID: string): Promise<any> {
-        return this.repository.delete({ id: requestID });
+        return await this.repository.delete({id: requestID});
     }
 
     // Find nearby possible donors
@@ -56,7 +59,7 @@ export class DonationRepository {
         let compatibleBloodTypes: string[]
 
         switch (bloodGroup) {
-            case "AB+": // univeral recipient
+            case "AB+": // universal recipient
                 compatibleBloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
                 break;
             case 'AB-':
@@ -91,45 +94,41 @@ export class DonationRepository {
                     "lastKnownLocation"::geography,
                     ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
                     $3
-                )
-            AND "bloodGroup" = ANY($4)
-            AND "status" = 'active'
-            AND ("lastDonationDate" IS NULL OR "lastDonationDate" < NOW() - INTERVAL '56 days')
-            AND "id" != $5
-            AND NOT EXISTS (
-                SELECT 1
-                FROM "donation_request"
-                WHERE "donation_request"."userId" = "user"."id"
-                AND "donation_request"."status" = 'open'
-                AND "donation_request"."requestFor" = 'self'
-            );
+                  )
+              AND "bloodGroup" = ANY ($4)
+              AND "status" = 'active'
+              AND ("lastDonationDate" IS NULL OR "lastDonationDate" < NOW() - INTERVAL '56 days')
+              AND "id" != $5
+              AND NOT EXISTS (SELECT 1
+                              FROM "donation_request"
+                              WHERE "donation_request"."userId" = "user"."id"
+                                AND "donation_request"."status" = 'open'
+                                AND "donation_request"."requestFor" = 'self');
         `;
 
         const query = `
-        SELECT *,
-        ST_Distance(
-            "lastKnownLocation"::geography,
-            ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
-        ) AS distance_meters
-        FROM "user"
-        WHERE ST_DWithin(
-                "lastKnownLocation"::geography,
-                ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
-                $3
-            )
-        AND "bloodGroup" = ANY($4)
-        AND "status" = 'active'
-        AND ("lastDonationDate" IS NULL OR "lastDonationDate" < NOW() - INTERVAL '56 days')
-        AND "id" != $5
-        AND NOT EXISTS (
-            SELECT 1
-            FROM "donation_request"
-            WHERE "donation_request"."userId" = "user"."id"
-            AND "donation_request"."status" = 'open'
-            AND "donation_request"."requestFor" = 'self'
-        )
-        ORDER BY distance_meters;
-    `;
+            SELECT *,
+                   ST_Distance(
+                           "lastKnownLocation"::geography,
+                           ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+                   ) AS distance_meters
+            FROM "user"
+            WHERE ST_DWithin(
+                    "lastKnownLocation"::geography,
+                    ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+                    $3
+                  )
+              AND "bloodGroup" = ANY ($4)
+              AND "status" = 'active'
+              AND ("lastDonationDate" IS NULL OR "lastDonationDate" < NOW() - INTERVAL '56 days')
+              AND "id" != $5
+              AND NOT EXISTS (SELECT 1
+                              FROM "donation_request"
+                              WHERE "donation_request"."userId" = "user"."id"
+                                AND "donation_request"."status" = 'open'
+                                AND "donation_request"."requestFor" = 'self')
+            ORDER BY distance_meters;
+        `;
 
         try {
             const result = await this.repository.query(query, [longitude, latitude, radiusInMeters, compatibleBloodTypes, userId]);
@@ -149,7 +148,7 @@ export class DonationRepository {
 
     // get all user requests
     async findUserDonationRequests(userID: string): Promise<DonationRequest[]> {
-        return this.repository.find({ where: { user: userID } });
+        return this.repository.find({where: {status: userID}});
     }
 
     // Find any open donation request by user

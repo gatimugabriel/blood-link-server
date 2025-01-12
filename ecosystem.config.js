@@ -8,7 +8,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       // watch: ["src"],
-      watch: process.env.NODE_ENV === "development",
+      // watch: process.env.NODE_ENV === "development",
       // ignore_watch: ["node_modules", "tmp"],
       max_memory_restart: "1G",
       env: {
@@ -27,7 +27,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       // watch: ["src/bull"],
-      watch: process.env.NODE_ENV === "development",
+      // watch: process.env.NODE_ENV === "development",
       max_memory_restart: "1G",
       env: {
         NODE_ENV: "development",
@@ -43,7 +43,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       // watch: ["src/bull"],
-      watch: process.env.NODE_ENV === "development",
+      // watch: process.env.NODE_ENV === "development",
       max_memory_restart: "1G",
       env: {
         NODE_ENV: "development",
