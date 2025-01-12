@@ -1,35 +1,48 @@
-import {Repository} from "typeorm";
+import {FindOneOptions, Repository} from "typeorm";
 import {User} from "../../domain/entity/User";
 import {DB} from "../database/data-source";
 import {DonationRequest} from "../../domain/entity/DonationRequest";
+import {Donation} from "../../domain/entity/Donation";
 import {BloodType} from "../../domain/value-objects/bloodType";
 
 /*--- Contains all the database operations related to the DonationRequest entity ---*/
 export class DonationRepository {
-    private repository: Repository<DonationRequest>
+    private requestRepo: Repository<DonationRequest>
+    private donationRepo: Repository<Donation>
 
     constructor() {
-        this.repository = DB.getRepository(DonationRequest);
+        this.requestRepo = DB.getRepository(DonationRequest);
+        this.donationRepo = DB.getRepository(Donation);
     }
 
     // Create a new donation request
     async createDonationRequest(request: DonationRequest): Promise<DonationRequest> {
-        return await this.repository.save(request);
+        return await this.requestRepo.save(request);
     }
 
     // Find request
     async findRequest(requestID: string): Promise<DonationRequest[]> {
-        return await this.repository.find({where: {id: requestID}});
+        return await this.requestRepo.find({
+            where: {id: requestID},
+            relations: {user: true},
+            select: {
+                user: {
+                    id: true,
+                    firstName: true,
+                    email: true,
+                }
+            }
+        });
     }
 
     // Find all donation requests
     async findAllDonationRequests(): Promise<DonationRequest[]> {
-        return await this.repository.find();
+        return await this.requestRepo.find();
     }
 
     // Find all open donation requests
     async findOpenDonationRequests(offset: number, limit: number): Promise<[DonationRequest[], number]> {
-        return await this.repository.createQueryBuilder('donationRequest')
+        return await this.requestRepo.createQueryBuilder('donationRequest')
             .select(['donationRequest', 'user.id'])
             .leftJoin('donationRequest.user', 'user')
             .where('donationRequest.status = :status', {status: 'open'})
@@ -41,17 +54,17 @@ export class DonationRepository {
 
     // Find a donation request by ID
     async findDonationRequestById(requestID: string): Promise<DonationRequest | null> {
-        return await this.repository.findOne({where: {id: requestID}})
+        return await this.requestRepo.findOne({where: {id: requestID}})
     }
 
     // Update a donation request
     async updateDonationRequest(request: DonationRequest): Promise<DonationRequest> {
-        return await this.repository.save(request);
+        return await this.requestRepo.save(request);
     }
 
     // Delete a donation request
     async deleteDonationRequest(requestID: string): Promise<any> {
-        return await this.repository.delete({id: requestID});
+        return await this.requestRepo.delete({id: requestID});
     }
 
     // Find nearby possible donors
@@ -131,7 +144,7 @@ export class DonationRepository {
         `;
 
         try {
-            const result = await this.repository.query(query, [longitude, latitude, radiusInMeters, compatibleBloodTypes, userId]);
+            const result = await this.requestRepo.query(query, [longitude, latitude, radiusInMeters, compatibleBloodTypes, userId]);
 
             // Convert raw results to User entities
             return result.map((row: any) => {
@@ -147,8 +160,8 @@ export class DonationRepository {
     }
 
     // get all user requests
-    async findUserDonationRequests(userID: string): Promise<DonationRequest[]> {
-        return this.repository.find({where: {status: userID}});
+    async findUserDonationRequests(userID: string): Promise<[DonationRequest[], number]> {
+        return await this.requestRepo.findAndCount({where: {user: {id: userID}}});
     }
 
     // Find any open donation request by user
@@ -161,11 +174,23 @@ export class DonationRepository {
             ORDER BY "requestFor" ASC
         `;
 
-        const result = await this.repository.query(query, [userID]);
+        const result = await this.requestRepo.query(query, [userID]);
         if (!result || result.length === 0) {
             return [];
         }
 
         return result;
+    }
+
+
+    ///----- DONATIONS-----//
+    // Create a new donation
+    async createDonation(donation: Donation): Promise<Donation> {
+        return await this.donationRepo.save(donation);
+    }
+
+    // find a donation
+    async findOne(options: FindOneOptions<Donation>): Promise<Donation | null> {
+        return this.donationRepo.findOne(options);
     }
 }

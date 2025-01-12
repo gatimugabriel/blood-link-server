@@ -1,8 +1,8 @@
-import { NextFunction, Response } from "express";
-import { DonationRequestService } from "../../application/services/donationRequestService";
-import { DonationRepository } from "../../infrastructure/repositories/donationRepository";
-import { ExtendedRequest } from "../../types/custom";
-import { UserRepository } from "../../infrastructure/repositories/userRepository";
+import {NextFunction, Response} from "express";
+import {DonationRequestService} from "../../application/services/donationRequestService";
+import {DonationRepository} from "../../infrastructure/repositories/donationRepository";
+import {ExtendedRequest} from "../../types/custom";
+import {UserRepository} from "../../infrastructure/repositories/userRepository";
 
 export class DonationRequestController {
     private readonly donationRequestService: DonationRequestService;
@@ -15,11 +15,11 @@ export class DonationRequestController {
 
     //--- create a new donation request ---//
     async createDonationRequest(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const { user } = req
+        const {user} = req
         const userID = user?.userID as string
 
         try {
-            const requestData = { ...req.body, userId: userID }
+            const requestData = {...req.body, userId: userID}
             const data = await this.donationRequestService.createNewDonationRequest(requestData);
             res.status(201).json(data);
         } catch (error) {
@@ -30,20 +30,20 @@ export class DonationRequestController {
     //--- Confirm Donor Availability to donate  ---//
     //   Prevents donor from being notified again within their donation timeframe
     async confirmDonorAvailability(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const { user } = req
+        const {user} = req
         const userID = user?.userID as string
+        const {requestID} = req.params
 
         try {
-            const requestData = { ...req.body, requesterID: userID }
-            const request = await this.donationRequestService.createNewDonationRequest(requestData);
-            res.status(201).json({ success: true, data: request });
+            const data = await this.donationRequestService.confirmDonorAvailability(userID, requestID);
+            res.status(201).json({message: "Your availability has been confirmed successfully!", data});
         } catch (error) {
             next(error);
         }
     }
 
     async getDonationRequest(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const { requestID } = req.params
+        const {requestID} = req.params
         try {
             const data = await this.donationRequestService.getDonationRequest(requestID);
             res.status(200).json(data);
@@ -52,15 +52,35 @@ export class DonationRequestController {
         }
     }
 
+    // TODO -> handle next 2 methods
+    async updateDonationRequest(req: ExtendedRequest, res: Response, next: NextFunction) {
+        const {requestID} = req.params
+        try {
+            const data = await this.donationRequestService.getDonationRequest(requestID);
+            res.status(200).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async deleteDonationRequest(req: ExtendedRequest, res: Response, next: NextFunction) {
+        const {requestID} = req.params
+        try {
+            const data = await this.donationRequestService.getDonationRequest(requestID);
+            res.status(200).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
 
     //--- Get user donation requests ---//
     async getUserDonationRequests(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const { user } = req
+        const {user} = req
         const userID = user?.userID as string
 
         try {
             const data = await this.donationRequestService.getUserDonationRequests(userID);
-            res.status(200).json(data);
+            res.status(200).json({data: data[0], count: data[1]});
         } catch (error) {
             next(error);
         }
@@ -73,12 +93,11 @@ export class DonationRequestController {
 
         try {
             const data = await this.donationRequestService.getOpenDonationRequests(page, limit);
-            res.status(200).json({ data });
+            res.status(200).json({data: data[0], count: data[1]});
         } catch (error) {
             next(error);
         }
     }
-
 
 
 }

@@ -1,31 +1,34 @@
-        import {Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn} from "typeorm"
-        import {DonationRequest} from "./DonationRequest";
+import {Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn, Unique} from "typeorm"
+import {DonationRequest} from "./DonationRequest";
+import {User} from "./User";
 
-        @Entity()
-        export class Donation {
+@Entity()
+@Unique(["donor", "status"])
+export class Donation {
 
-            @PrimaryGeneratedColumn('uuid')
-            id!: string;
+    @PrimaryGeneratedColumn('uuid')
+    id!: string;
 
-            @Column()
-            donorID!: string;
+    @ManyToOne(() => DonationRequest, request => request.id, {onDelete: "CASCADE"})
+    request!: DonationRequest;
 
-            @Column()
-            @ManyToOne(() => DonationRequest, request => request.id, { onDelete: "CASCADE" })
-            requestID!: string;
+    @ManyToOne(() => User, donor => donor.id, {onDelete: "CASCADE"})
+    @Index()
+    donor!: User;
 
-            @Column({ type: "enum", enum: ["scheduled", "completed", "cancelled"], default: "scheduled" })
-            status!: string;
+    @Column({type: "enum", enum: ["scheduled", "completed", "cancelled"], default: "scheduled"})
+    @Index()
+    status!: string;
 
-            @Column()
-            donationDate!: Date;
+    @Column()
+    donationDate!: Date;
 
-            @CreateDateColumn()
-            createdAt!: Date;
+    @CreateDateColumn()
+    createdAt!: Date;
 
-            @CreateDateColumn()
-            updatedAt!: Date;
+    @CreateDateColumn()
+    updatedAt!: Date;
 
-            @CreateDateColumn()
-            deletedAt!: Date;
-        }
+    @CreateDateColumn()
+    deletedAt!: Date;
+}

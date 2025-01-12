@@ -41,8 +41,8 @@ export class DonationAggregate {
             throw new Error("Donor cannot fulfill donation request");
         }
         this.donation = new Donation();
-        this.donation.donorID = donor.id;
-        this.donation.requestID = this.donationRequest.id;
+        this.donation.donor = donor;
+        // this.donation.request = this.donationRequest.id;
         this.donation.status = "scheduled";
         this.donor = donor;
     }
