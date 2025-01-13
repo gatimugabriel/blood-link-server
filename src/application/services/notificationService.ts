@@ -1,5 +1,5 @@
-import { firebaseAdmin } from "../../config/firebase/firebase.config";
-import { User } from "../../domain/entity/User";
+import {firebaseAdmin} from "../../config/firebase/firebase.config";
+import {User} from "../../domain/entity/User";
 import mailerUtil from "../../utils/mailer";
 
 // interface PushNotificationData {
@@ -26,19 +26,49 @@ export class NotificationService {
 
         // send push notifications with Firebase
         const pushPromises = recipients.map(recipient => {
-            if (data.userFcmToken) {
-                return this.sendFirebaseNotification(data.pushData.token, data);
+            if (recipient.tokens.length > 0) {
+                const fcmToken = recipient.tokens[0]
+                return this.sendExpoPushNotification(fcmToken, data);
             }
             return Promise.resolve();
         });
 
-
         await Promise.all([...emailPromises, ...pushPromises]);
-        console.log("All emails & push-notitifcations sent to these donors :->", recipients)
+        console.log("All emails & push-notifications sent!")
         // TODO: Implement SMS notifications
     }
 
-    async sendFirebaseNotification(fcmToken: string, data: any) {
+    async sendExpoPushNotification(fcmToken: any, data: any) {
+        try {
+            const response = await fetch('https://exp.host/--/api/v2/push/send', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Accept-encoding': 'gzip, deflate',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    to: fcmToken,
+                    title: data.title,
+                    body: data.subTitle,
+                    data: {
+                        type: "DONATION_REQUEST",
+                        // location: JSON.stringify(message.body.location)
+                        ...data.body
+                    },
+                }),
+            });
+
+            const responseData = await response.json();
+            console.log('Successfully sent push notification:', responseData);
+            return response;
+        } catch (error) {
+            console.error('Error sending push notification:', error);
+            throw error;
+        }
+    }
+
+    async sendFirebasePushNotification(fcmToken: string, data: any) {
         try {
             const message = {
                 notification: {

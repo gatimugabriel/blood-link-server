@@ -100,26 +100,7 @@ export class DonationRepository {
                 throw new Error('Invalid blood type');
         }
 
-        const query2 = `
-            SELECT *
-            FROM "user"
-            WHERE ST_DWithin(
-                    "lastKnownLocation"::geography,
-                    ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
-                    $3
-                  )
-              AND "bloodGroup" = ANY ($4)
-              AND "status" = 'active'
-              AND ("lastDonationDate" IS NULL OR "lastDonationDate" < NOW() - INTERVAL '56 days')
-              AND "id" != $5
-              AND NOT EXISTS (SELECT 1
-                              FROM "donation_request"
-                              WHERE "donation_request"."userId" = "user"."id"
-                                AND "donation_request"."status" = 'open'
-                                AND "donation_request"."requestFor" = 'self');
-        `;
-
-        const query = `
+        const query0 = `
             SELECT *,
                    ST_Distance(
                            "lastKnownLocation"::geography,
@@ -143,13 +124,65 @@ export class DonationRepository {
             ORDER BY distance_meters;
         `;
 
+        const query = `
+    SELECT 
+        u.*,
+        ST_Distance(
+            u."lastKnownLocation"::geography,
+            ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+        ) AS distance_meters,
+        COALESCE(array_agg(t.token) FILTER (WHERE t.type = 'fcm' AND t.token IS NOT NULL), ARRAY[]::text[]) AS tokens
+    FROM "user" u
+    LEFT JOIN "token" t ON u."id"::uuid = t."userID"::uuid
+    WHERE ST_DWithin(
+            u."lastKnownLocation"::geography,
+            ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+            $3
+        )
+        AND u."bloodGroup" = ANY ($4)
+        AND u."status" = 'active'
+        AND (u."lastDonationDate" IS NULL OR u."lastDonationDate" < NOW() - INTERVAL '56 days')
+        AND u."id"::uuid != $5::uuid
+        AND NOT EXISTS (
+            SELECT 1
+            FROM "donation_request"
+            WHERE "donation_request"."userId" = u."id"
+                AND "donation_request"."status" = 'open'
+                AND "donation_request"."requestFor" = 'self'
+        )
+    GROUP BY 
+        u.id, 
+        u."firstName",
+        u."lastName",
+        u."email",
+        u."phone",
+        u."password",
+        u."bloodGroup",
+        u."role",
+        u."user_source",
+        u."isVerified",
+        u."status",
+        u."googleId",
+        u."primaryLocation",
+        u."lastKnownLocation",
+        u."lastDonationDate",
+        u."createdAt",
+        u."updatedAt",
+        u."deletedAt"
+    ORDER BY distance_meters;
+`
+
+
         try {
             const result = await this.requestRepo.query(query, [longitude, latitude, radiusInMeters, compatibleBloodTypes, userId]);
 
             // Convert raw results to User entities
             return result.map((row: any) => {
                 const user = new User();
-                Object.assign(user, row);
+                Object.assign(user, {
+                    ...row,
+                    fcm_tokens: row.tokens || []
+                });
                 return user;
             });
 

@@ -16,22 +16,31 @@ export class DonationRequestService {
     }
 
     // --- create a new donation request --- //
-    async createNewDonationRequest(dto: CreateDonationRequestDto): Promise<DonationRequest> {
+    async createNewDonationRequest(data: CreateDonationRequestDto): Promise<DonationRequest> {
         let requestLocationPoint
         let dataToSave
+        let jobData: {
+            bloodGroup: BloodType,
+            requestID: string,
+            requestLocation: { latitude: number, longitude: number },
+            urgency: string,
+            userId: string // requester ID
+        }
 
-        requestLocationPoint = createPoint(dto.requestLocation.latitude, dto.requestLocation.longitude)
+        requestLocationPoint = createPoint(data.requestLocation.latitude, data.requestLocation.longitude)
 
-        if (dto.requestingFor !== "" && dto.requestingFor === "other") {
+        if (data.requestingFor !== "" && data.requestingFor === "other") {
+            console.log("saving for others")
             dataToSave = {
-                ...dto,
+                ...data,
                 requestLocation: requestLocationPoint,
-                user: dto.userId,
-                requestFor: dto.requestingFor
+                user: data.userId,
+                requestFor: data.requestingFor
             }
         } else {
+            console.log("saving for self")
             // Check if the user has any open requests for themselves
-            const existingRequests: DonationRequest[] = await this.donationRepository.findOpenRequestsByUser(dto.userId);
+            const existingRequests: DonationRequest[] = await this.donationRepository.findOpenRequestsByUser(data.userId);
             const hasOpenSelfRequest = existingRequests.some(item =>
                 item && item.requestFor === "self"
             );
@@ -39,8 +48,17 @@ export class DonationRequestService {
                 throw new Error("You already have an open donation request for yourself. Please hang tight as we reach more donors / request for another user");
             }
 
-            const user = await this.userRepo.findUser({where: {id: dto.userId}});
-            dataToSave = {...dto, requestLocation: requestLocationPoint, bloodGroup: user?.bloodGroup, user: dto.userId}
+            const user = await this.userRepo.findUser({where: {id: data.userId}});
+            if (!user) {
+                throw new Error("User not found");
+            }
+
+            dataToSave = {
+                ...data,
+                requestLocation: requestLocationPoint,
+                bloodGroup: user.bloodGroup,
+                user: data.userId
+            }
         }
 
         //  Save request to DB
@@ -48,8 +66,19 @@ export class DonationRequestService {
         Object.assign(donationRequest, dataToSave);
         const savedRequest = await this.donationRepository.createDonationRequest(donationRequest);
 
+        jobData = {
+            bloodGroup: savedRequest.bloodGroup,
+            requestID: savedRequest.id,
+            requestLocation: {
+                latitude: data.requestLocation.latitude,
+                longitude: data.requestLocation.longitude,
+            },
+            urgency: data.urgency,
+            userId: data.userId // requester ID
+        }
+
         // Add a job to the donation request queue to find & notify nearby donors
-        await donationRequestQueue.add('donationRequestJob', {requestData: dto});
+        await donationRequestQueue.add('donationRequestJob', {requestData: jobData});
         return savedRequest;
     }
 

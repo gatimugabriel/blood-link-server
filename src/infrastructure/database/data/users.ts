@@ -1,4 +1,4 @@
-//  saple test data
+//  sample test data
 export const users = [
     {
         "firstName": "John",
@@ -7,7 +7,7 @@ export const users = [
         "phone": "+254700000001",
         "password": "Password#1",
         "confirmPassword": "Password#1",
-        "bloodGroup": "A+",
+        "bloodGroup": "AB+",
         "primaryLocation": {
             "latitude": 40.7128,
             "longitude": -74.0060
