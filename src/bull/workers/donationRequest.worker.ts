@@ -21,7 +21,7 @@ async function processDonationRequest(job: Job) {
     const donationRequest = job.data;
     // console.log(`Donation Request Data in job: ${job.name},  jobID: ${job.id}`, donationRequest);
     const { requestData } = donationRequest
-
+    
     try {
         // Ensure DB is initialized before processing jobs
         if (!DB.isInitialized) {
