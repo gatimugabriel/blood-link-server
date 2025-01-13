@@ -1,6 +1,6 @@
-import { Repository } from "typeorm";
-import { Token, User } from "../../domain/entity/User";
-import { DB } from "../database/data-source";
+import {FindManyOptions, FindOneOptions, Repository} from "typeorm";
+import {Token, User} from "../../domain/entity/User";
+import {DB} from "../database/data-source";
 
 // Contains all the database operations related to the User entity
 // includes the Token entity also for User tokens operations
@@ -13,26 +13,23 @@ export class UserRepository {
         this.tokenRepository = DB.getRepository(Token);
     }
 
-    async findByEmail(email: string): Promise<User | null> {
-        return await this.repository.findOne({ where: { email } });
-    }
-
-    async findByID(userID: string): Promise<User | null> {
-        return await this.repository.findOne({ where: { id: userID } });
-    }
-
+    //########--- USER ---##########//
     async saveUser(user: User): Promise<User> {
         return await this.repository.save(user);
     }
 
-    async deleteUser(userID: string): Promise<any> {
-        return await this.repository.delete({ id: userID });
+    async findUser(options: FindOneOptions<User>): Promise<User | null> {
+        return this.repository.findOne(options);
     }
 
-    // Support for raw queries
-    async rawQuery(query: string, parameters: any[]): Promise<any> {
-        return await this.repository.query(query, parameters);
-    }
+    // async updateUser(user: User): Promise<User> {
+    //     return await this.repository.save(user);
+    // }
+    //
+    // async deleteUser(userID: string): Promise<any> {
+    //     return await this.repository.delete({ id: userID });
+    // }
+
 
     //  find users within a specified range (radius distance)
     // @param -> latitude: number
@@ -74,16 +71,20 @@ export class UserRepository {
         return users;
     }
 
-    //--- USER TOKENS ---//
-    async saveUserToken(token: Token): Promise<Token> {
+    //########--- USER TOKENS ---##########//
+    async saveToken(token: Token): Promise<Token> {
         return await this.tokenRepository.save(token);
     }
 
-    async deleteUserToken(token: Token): Promise<any> {
-        return await this.tokenRepository.delete({ id: token.id });
+    async findUserToken(options: FindOneOptions<Token>): Promise<Token | null> {
+        return this.tokenRepository.findOne(options);
     }
 
-    async findUserToken(userID: string, tokenString: string, tokenType: string) {
-        return await this.tokenRepository.findOne({ where: { userID, token: tokenString, type: tokenType } });
+    async findManyUserTokens(options: FindManyOptions<Token>): Promise<[Token[], number]> {
+        return this.tokenRepository.findAndCount(options);
+    }
+
+    async deleteUserToken(token: Token): Promise<any> {
+        return await this.tokenRepository.delete({id: token.id});
     }
 }

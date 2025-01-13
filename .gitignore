@@ -6,3 +6,8 @@ tmp/
 temp/
 shortcuts.txt
 .env
+serviceAccountKey.json
+serviceAccountKey*
+google-services.json
+
+*.session.sql

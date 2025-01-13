@@ -1,10 +1,10 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import {NextFunction, Response} from 'express';
+import { NextFunction, Response } from 'express';
 import crypto from 'crypto';
-import {mailConfig} from "../config/mail";
-import {ExtendedRequest} from "../types/custom";
-import {User} from "../domain/entity/User";
+import { mailConfig } from "../config/mail.config";
+import { ExtendedRequest } from "../types/custom";
+import { User } from "../domain/entity/User";
 
 dotenv.config();
 
@@ -96,7 +96,7 @@ const sendResetPassword = async ({ userName, email, token }: { userName: string;
 };
 
 const resendEmailToUnverifiedUser = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-    const {user} = req
+    const { user } = req
 
     console.log('reverifying')
     // delete old verification tokens
@@ -114,7 +114,7 @@ const resendEmailToUnverifiedUser = async (req: ExtendedRequest, res: Response, 
     //         expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours
     //     },
     // });
-    const newToken = {token: verificationCode}
+    const newToken = { token: verificationCode }
 
     // send email
     await sendVerificationEmail({
@@ -140,9 +140,9 @@ const sendDonationRequestEmail = async (recipient: User, messageData: any) => {
                 We have a new donation request that needs your help. Here are the details:
             </p>
             <ul style="font-size: 16px; color: #333; list-style: none; padding: 0;">
-                <li><strong>Urgency:</strong> ${messageData.urgency}</li>
-                <li><strong>Location:</strong> ${messageData.location.latitude}, ${messageData.location.longitude}</li>
-                <li><strong>Blood Group:</strong> ${messageData.bloodGroup}</li>
+                <li><strong>Urgency:</strong> ${messageData.body.urgency}</li>
+                <li><strong>Location:</strong> ${messageData.body.location.latitude}, ${messageData.body.location.longitude}</li>
+                <li><strong>Blood Group:</strong> ${messageData.body.bloodGroup}</li>
             </ul>
             <div style="text-align: center; margin: 20px 0;">
                 <a href="${process.env["MOBILE_CLIENT_ORIGIN"]}/donations/donate/confirm-availability" 
@@ -156,7 +156,7 @@ const sendDonationRequestEmail = async (recipient: User, messageData: any) => {
         </div>
     </div>
     `;
-    await sendMail(recipient.email, 'New Donation Request', htmlBody);
+    await sendMail(recipient.email, messageData.title, htmlBody);
 };
 
 const mailerUtil = {

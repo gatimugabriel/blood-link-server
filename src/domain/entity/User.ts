@@ -59,11 +59,14 @@ export class User {
     @CreateDateColumn()
     deletedAt!: Date;
 
-
-    //---  Relations ---//
+      //---  Relations ---//
     // User --> Token
     @OneToMany(() => Token, token => token.user)
     tokens!: Token[];
+
+    // User --> Donation Requests (One user can have many donation requests)
+    @OneToMany(() => DonationRequest, donationRequest => donationRequest.user)
+    donationRequests!: DonationRequest[];
 }
 
 /* User Token */
@@ -79,7 +82,7 @@ export class Token {
     @Column()
     token!: string;
 
-    @Column({type: "enum", enum: ["refresh", "verification", "password_reset"], default: "refresh"})
+    @Column({type: "enum", enum: ["refresh", "verification", "password_reset", "fcm"], default: "refresh"})
     type!: string;
 
     @CreateDateColumn()
@@ -92,9 +95,5 @@ export class Token {
     //  Token --> User
     @ManyToOne(() => User, user => user.tokens)
     user!: User;
-
-    // User --> Donation Requests (One user can have many donation requests)
-    @OneToMany(() => DonationRequest, donationRequest => donationRequest.user)
-    donationRequests!: DonationRequest[];
 }
 

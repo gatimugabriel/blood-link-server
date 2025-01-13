@@ -9,7 +9,7 @@ export class DonationRequest {
 
     // relationship with User entity
     @ManyToOne(() => User, user => user.id, { onDelete: "CASCADE" },)
-    user!: string;
+    user!: User;
 
     @Column({ type: "enum", enum: BloodType })
     bloodGroup!: BloodType;
