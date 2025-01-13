@@ -6,5 +6,4 @@ const serviceAccount = require(path.join(process.cwd(), '/src/config/firebase/se
 
 export const firebaseAdmin = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    //   databaseURL: ""
 });

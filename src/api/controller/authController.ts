@@ -40,7 +40,7 @@ export class AuthController {
             }
             const token = new Token();
             Object.assign(token, tokenData);
-            await this.userRepo.saveUserToken(token);
+            await this.userRepo.saveToken(token);
 
             // set http-only cookies
             res.cookie('accessToken', accessToken, {

@@ -1,10 +1,10 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { UserRepository } from "../../infrastructure/repositories/userRepository";
-import { CreateUserDto, LoginUserDto, UserTokenDto } from "../dtos/userDto";
-import { Token, User } from "../../domain/entity/User";
-import { encryptPayload } from "../../utils/encryption";
-import { createPoint } from "../../utils/database";
+import {UserRepository} from "../../infrastructure/repositories/userRepository";
+import {CreateUserDto, LoginUserDto, UserTokenDto} from "../dtos/userDto";
+import {Token, User} from "../../domain/entity/User";
+import {encryptPayload} from "../../utils/encryption";
+import {createPoint} from "../../utils/database";
 
 export class AuthService {
     constructor(private readonly userRepository: UserRepository) {
@@ -20,7 +20,7 @@ export class AuthService {
             lastDonationDate: null,
         };
 
-        const dataToSave = { ...defaultValues, ...userData };
+        const dataToSave = {...defaultValues, ...userData};
 
         if (!userData.primaryLocation) {
             dataToSave.primaryLocation = createPoint(dataToSave.lastKnownLocation.latitude, dataToSave.lastKnownLocation.longitude)
@@ -41,7 +41,9 @@ export class AuthService {
     //  @ authenticateUser
     //  Generates JWT tokens
     async authenticateUser(loginData: LoginUserDto): Promise<{ accessToken: string, refreshToken: string }> {
-        const user = await this.userRepository.findByEmail((loginData.email).toLowerCase());
+        const user = await this.userRepository.findUser({
+            where: {email: (loginData.email).toLowerCase()}
+        });
         if (!user) {
             throw new Error("Invalid credentials");
         }
@@ -59,8 +61,8 @@ export class AuthService {
         }
         const encryptedPayload = encryptPayload(payload);
 
-        const accessToken = jwt.sign({ data: encryptedPayload }, process.env["JWT_SECRET_ACCESS_TOKEN"] as string, { expiresIn: "15m" });
-        const refreshToken = jwt.sign({ data: encryptedPayload }, process.env["JWT_SECRET_REFRESH_TOKEN"] as string, { expiresIn: "20d" });
+        const accessToken = jwt.sign({data: encryptedPayload}, process.env["JWT_SECRET_ACCESS_TOKEN"] as string, {expiresIn: "15m"});
+        const refreshToken = jwt.sign({data: encryptedPayload}, process.env["JWT_SECRET_REFRESH_TOKEN"] as string, {expiresIn: "20d"});
 
         // --- save refresh token to DB ---//
         const tokenData: UserTokenDto = {
@@ -71,9 +73,9 @@ export class AuthService {
 
         const token = new Token();
         Object.assign(token, tokenData);
-        await this.userRepository.saveUserToken(token);
+        await this.userRepository.saveToken(token);
 
-        return { accessToken, refreshToken };
+        return {accessToken, refreshToken};
     }
 
     //  @ (Signout) -> clear refresh token from DB
@@ -84,7 +86,7 @@ export class AuthService {
 
     //get auth credentials
     async getAuthCredentials(userID: string, tokenString: string, tokenType: string): Promise<Token> {
-        const userToken = await this.userRepository.findUserToken(userID, tokenString, tokenType);
+        const userToken = await this.userRepository.findUserToken({ where: { userID, token: tokenString, type: tokenType } });
         if (!userToken) {
             throw new Error(`Invalid ${tokenType} Token`);
         }

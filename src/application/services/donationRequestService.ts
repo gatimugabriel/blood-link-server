@@ -39,7 +39,7 @@ export class DonationRequestService {
                 throw new Error("You already have an open donation request for yourself. Please hang tight as we reach more donors / request for another user");
             }
 
-            const user = await this.userRepo.findByID(dto.userId);
+            const user = await this.userRepo.findUser({where: {id: dto.userId}});
             dataToSave = {...dto, requestLocation: requestLocationPoint, bloodGroup: user?.bloodGroup, user: dto.userId}
         }
 
@@ -84,7 +84,7 @@ export class DonationRequestService {
         if (!request || request[0].status !== 'open') {
             throw new Error('Donation request not found or no longer open');
         }
-        if(request[0].user.id === userID){
+        if (request[0].user.id === userID) {
             throw new Error('You cannot donate to yourself');
         }
 

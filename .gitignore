@@ -9,3 +9,5 @@ shortcuts.txt
 serviceAccountKey.json
 serviceAccountKey*
 google-services.json
+
+*.session.sql
