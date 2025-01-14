@@ -2,19 +2,6 @@ import {firebaseAdmin} from "../../config/firebase/firebase.config";
 import {User} from "../../domain/entity/User";
 import mailerUtil from "../../utils/mailer";
 
-// interface PushNotificationData {
-//     notification: {
-//         title: string;
-//         body: string;
-//     },
-//     data: {
-//         type: 'DONATION_REQUEST' | 'GENERAL' | 'CHAT';
-//         additionalData?: any;
-//     },
-//     fcmToken: string
-// }
-
-
 // --- Notification Service --- //
 // @desc -> sends notifications to a given list of users.
 export class NotificationService {
@@ -53,17 +40,16 @@ export class NotificationService {
                     body: data.subTitle,
                     data: {
                         type: "DONATION_REQUEST",
-                        // location: JSON.stringify(message.body.location)
                         ...data.body
                     },
                 }),
             });
 
             const responseData = await response.json();
-            console.log('Successfully sent push notification:', responseData);
+            console.log('Successfully sent expo push notification:', responseData);
             return response;
         } catch (error) {
-            console.error('Error sending push notification:', error);
+            console.error('Error sending expo push notification:', error);
             throw error;
         }
     }
@@ -83,10 +69,10 @@ export class NotificationService {
             }
 
             const response = await firebaseAdmin.messaging().send(message);
-            console.log('Successfully sent push notification:', response);
+            console.log('Successfully sent firebase push notification:', response);
             return response;
         } catch (error) {
-            console.error('Error sending push notification:', error);
+            console.error('Error sending firebase push notification:', error);
             throw error;
         }
     }

@@ -1,9 +1,9 @@
-import {FindOneOptions, Repository} from "typeorm";
-import {User} from "../../domain/entity/User";
-import {DB} from "../database/data-source";
-import {DonationRequest} from "../../domain/entity/DonationRequest";
-import {Donation} from "../../domain/entity/Donation";
-import {BloodType} from "../../domain/value-objects/bloodType";
+import { FindOneOptions, Repository } from "typeorm";
+import { User } from "../../domain/entity/User";
+import { DB } from "../database/data-source";
+import { DonationRequest } from "../../domain/entity/DonationRequest";
+import { Donation } from "../../domain/entity/Donation";
+import { BloodType } from "../../domain/value-objects/bloodType";
 
 /*--- Contains all the database operations related to the DonationRequest entity ---*/
 export class DonationRepository {
@@ -23,8 +23,8 @@ export class DonationRepository {
     // Find request
     async findRequest(requestID: string): Promise<DonationRequest[]> {
         return await this.requestRepo.find({
-            where: {id: requestID},
-            relations: {user: true},
+            where: { id: requestID },
+            relations: { user: true },
             select: {
                 user: {
                     id: true,
@@ -45,7 +45,7 @@ export class DonationRepository {
         return await this.requestRepo.createQueryBuilder('donationRequest')
             .select(['donationRequest', 'user.id'])
             .leftJoin('donationRequest.user', 'user')
-            .where('donationRequest.status = :status', {status: 'open'})
+            .where('donationRequest.status = :status', { status: 'open' })
             .skip(offset)
             .take(limit)
             .orderBy('donationRequest.createdAt', 'DESC')
@@ -54,7 +54,7 @@ export class DonationRepository {
 
     // Find a donation request by ID
     async findDonationRequestById(requestID: string): Promise<DonationRequest | null> {
-        return await this.requestRepo.findOne({where: {id: requestID}})
+        return await this.requestRepo.findOne({ where: { id: requestID } })
     }
 
     // Update a donation request
@@ -64,7 +64,7 @@ export class DonationRepository {
 
     // Delete a donation request
     async deleteDonationRequest(requestID: string): Promise<any> {
-        return await this.requestRepo.delete({id: requestID});
+        return await this.requestRepo.delete({ id: requestID });
     }
 
     // Find nearby possible donors
@@ -176,7 +176,6 @@ export class DonationRepository {
         try {
             const result = await this.requestRepo.query(query, [longitude, latitude, radiusInMeters, compatibleBloodTypes, userId]);
 
-            // Convert raw results to User entities
             return result.map((row: any) => {
                 const user = new User();
                 Object.assign(user, {
@@ -194,7 +193,7 @@ export class DonationRepository {
 
     // get all user requests
     async findUserDonationRequests(userID: string): Promise<[DonationRequest[], number]> {
-        return await this.requestRepo.findAndCount({where: {user: {id: userID}}});
+        return await this.requestRepo.findAndCount({ where: { user: { id: userID } } });
     }
 
     // Find any open donation request by user
