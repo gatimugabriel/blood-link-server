@@ -142,9 +142,12 @@ export class DonationRequestService {
     //--- Get all open donation requests ---//
     // @param page: number 
     // @param limit: number
-    async getOpenDonationRequests(page: number, limit: number): Promise<[DonationRequest[], number]> {
+    // @param latitude: number -> optional
+    // @param longitude: number -> optional
+    // @param radius (in meters): number -> optional
+    async getOpenDonationRequests(page: number, limit: number, latitude?: number, longitude?: number, radius?: number ): Promise<[DonationRequest[], number]> {
         const offset = (page - 1) * limit;
-        return await this.donationRepository.findOpenDonationRequests(offset, limit);
+        return await this.donationRepository.findOpenDonationRequests(offset, limit, latitude, longitude, radius);
     }
 
 
