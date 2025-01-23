@@ -90,11 +90,19 @@ export class DonationRequestController {
     async getOpenDonationRequests(req: ExtendedRequest, res: Response, next: NextFunction) {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
+        const latitude = parseFloat(req.query.lat as string);
+        const longitude = parseFloat(req.query.long as string);
+        const radius = parseFloat(req.query.radius as string);
+
+        if (limit > 100) {
+            return res.status(400).json({message: "Limit cannot be greater than 100. Please reduce your limit"});
+        }
 
         try {
-            const data = await this.donationRequestService.getOpenDonationRequests(page, limit);
-            res.status(200).json({data: data[0], count: data[1]});
+            const data = await this.donationRequestService.getOpenDonationRequests(page, limit, latitude, longitude, radius);
+            res.status(200).json({data: data[0], page:page, count: data[0].length, totalCount: data[1]});
         } catch (error) {
+            console.error(error)
             next(error);
         }
     }

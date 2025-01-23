@@ -7,7 +7,14 @@ const router = Router();
 const { validateDonationRequestInput, validateDonationRequestInputForSomeoneElse, requireBody, validate } = validationMiddleware;
 const controller = new DonationRequestController()
 
-router.use(verifyToken("access")) // apply middleware to all routes
+router.get('/request/open', controller.getOpenDonationRequests.bind(controller)) // Get all open donation requests
+router.route('/request/:requestID')
+    .get(controller.getDonationRequest.bind(controller)) // Get a donation request by ID
+    .patch([requireBody, validate], controller.updateDonationRequest.bind(controller))
+    .delete(controller.deleteDonationRequest.bind(controller));
+
+// Authenticated routes
+router.use(verifyToken("access"))
 
 /*//--- DonationRequest Routes ---//*/
 router.post('/request', [
@@ -19,13 +26,9 @@ router.post('/request/other-person', [
     ...validateDonationRequestInputForSomeoneElse, requireBody, validate
 ],
     controller.createDonationRequest.bind(controller)); // Create a new blood donation request for someone else
-router.get('/request/open', controller.getOpenDonationRequests.bind(controller)) // Get all open donation requests
 router.get('/request/me', controller.getUserDonationRequests.bind(controller)) // Get user donation requests
 
-router.route('/request/:requestID')
-    .get(controller.getDonationRequest.bind(controller)) // Get a donation request by ID
-    .patch([requireBody, validate], controller.updateDonationRequest.bind(controller))
-    .delete(controller.deleteDonationRequest.bind(controller));
+
 
 
 /*--- Donation Routes ---*/

@@ -4,7 +4,7 @@ import { UserRepository } from "../../infrastructure/repositories/userRepository
 import { users } from "../../infrastructure/database/data/users";
 import { ExtendedRequest } from "../../types/custom";
 import { firebaseAdmin } from "../../config/firebase/firebase.config";
-import {token} from "morgan";
+import { token } from "morgan";
 
 export class UserController {
     private readonly userService: UserService
@@ -52,44 +52,9 @@ export class UserController {
             const { fcmToken } = req.body
             const userId = user?.userID as string
             const data = await this.userService.saveUserToken(userId, fcmToken, "fcm");
-            res.status(200).json({ message: "FCM token saved", data });
+            res.status(201).json({ message: "FCM token saved", data });
         } catch (error) {
             next(error)
         }
     }
-    
-    async sendPushNotification(req: ExtendedRequest, res: Response, next: NextFunction) {
-        try {
-            const { user } = req
-            const { message } = req.body
-            const userId = user?.userID as string
-
-            const [tokens, count] = await this.userService.getUserTokens(userId, "fcm");
-
-            const response = await fetch('https://exp.host/--/api/v2/push/send', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Accept-encoding': 'gzip, deflate',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    to: tokens[1].token,
-                    title: message.title,
-                    body: message.subTitle,
-                    data: {
-                        type: "DONATION_REQUEST",
-                        location: JSON.stringify(message.body.location)
-                    },
-                }),
-            });
-
-            const data = await response.json();
-            res.status(200).json({ message: "Push notification sent", data });
-        } catch (error) {
-            console.log(error)
-            next(error)
-        }
-    }
-
 }

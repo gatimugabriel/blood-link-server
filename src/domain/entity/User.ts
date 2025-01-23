@@ -1,4 +1,4 @@
-import {Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from "typeorm"
+import {Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique} from "typeorm"
 import {BloodType} from "../value-objects/bloodType";
 import {DonationRequest} from "./DonationRequest";
 
@@ -71,6 +71,7 @@ export class User {
 
 /* User Token */
 @Entity()
+@Unique(["userID", "token", "type"])
 export class Token {
 
     @PrimaryGeneratedColumn('uuid')

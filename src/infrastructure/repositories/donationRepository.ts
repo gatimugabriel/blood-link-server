@@ -40,16 +40,125 @@ export class DonationRepository {
         return await this.requestRepo.find();
     }
 
-    // Find all open donation requests
-    async findOpenDonationRequests(offset: number, limit: number): Promise<[DonationRequest[], number]> {
-        return await this.requestRepo.createQueryBuilder('donationRequest')
-            .select(['donationRequest', 'user.id'])
-            .leftJoin('donationRequest.user', 'user')
-            .where('donationRequest.status = :status', {status: 'open'})
-            .skip(offset)
-            .take(limit)
-            .orderBy('donationRequest.createdAt', 'DESC')
-            .getManyAndCount();
+    async findOpenDonationRequests(
+        offset: number,
+        limit: number,
+        latitude?: number,
+        longitude?: number,
+        radiusInMeters?: number
+    ): Promise<[DonationRequest[], number]> {
+        // No coordinates provided
+        if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
+            const queryBuilder = this.requestRepo.createQueryBuilder('donationRequest')
+                .select(['donationRequest', 'user.id', 'user.lastKnownLocation'])
+                .leftJoin('donationRequest.user', 'user')
+                .where('donationRequest.status = :status', {status: 'open'})
+                .orderBy('donationRequest.createdAt', 'DESC')
+                .skip(offset)
+                .take(limit);
+
+            return await queryBuilder.getManyAndCount();
+        }
+
+        if (isNaN(<number>radiusInMeters) || radiusInMeters === null || radiusInMeters === undefined) {
+            radiusInMeters = 50000;
+        }
+
+        const rawQuery = `
+            WITH filtered_requests AS (SELECT dr.*,
+                                              u.id                                  AS user_id,
+--                                               u."lastKnownLocation",
+--                                               u."primaryLocation",
+                                              u.email,
+                                              u.phone,
+
+                                              ST_Y(u."lastKnownLocation"::geometry) AS user_last_known_latitude,
+                                              ST_X(u."lastKnownLocation"::geometry) AS user_last_known_longitude,
+                                              ST_X(u."primaryLocation"::geometry)   AS user_primary_longitude,
+                                              ST_Y(u."primaryLocation"::geometry)   AS user_primary_latitude,
+
+                                              ST_X(dr."requestLocation"::geometry)  AS request_longitude,
+                                              ST_Y(dr."requestLocation"::geometry)  AS request_latitude,
+
+                                              ST_Distance(
+                                                      dr."requestLocation"::geography,
+                                                      ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+                                              )                                     AS distance_meters
+
+                                       FROM donation_request dr
+                                                LEFT JOIN public."user" u on u.id = dr."userId"
+
+                                       WHERE ST_DWithin(
+                                               dr."requestLocation"::geography,
+                                               ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3
+                                             )
+
+                                         AND dr."status" = 'open'
+
+                                       ORDER BY distance_meters)
+
+            SELECT *,
+--                    (SELECT COUNT(*) FROM filtered_requests) AS total_count
+                    (SELECT COUNT(*) FROM donation_request WHERE "status" = 'open') AS total_count, -- Total unfiltered count
+                    (SELECT COUNT(*) FROM filtered_requests) AS filtered_count -- Count of filtered records
+            FROM filtered_requests
+            ORDER BY distance_meters ASC
+            LIMIT $4 OFFSET $5
+        `
+
+        const results = await this.requestRepo.query(rawQuery, [
+            longitude,      // $1 longitude
+            latitude,       // $2 latitude
+            radiusInMeters,  // $3 - radius
+            limit,          // $5 - limit
+            offset         // $5 - offset
+        ]);
+
+        console.log(results)
+
+        // Transform raw results into DonationRequest entities
+        const donationRequests = results.map((row: any) => {
+            console.log("row", row)
+
+            const request = new DonationRequest();
+            Object.assign(request, {
+                id: row.id,
+                bloodGroup: row.bloodGroup,
+                urgency: row.urgency,
+                units: row.units,
+                status: row.status,
+                requestLocation: {
+                    latitude: row.request_latitude,
+                    longitude: row.request_longitude,
+                },
+                requestFor: row.requestFor,
+                healthFacility: row.healthFacility,
+                patientName: row.patientName,
+                mobileNumber: row.mobileNumber,
+                stringRequestLocation: row.stringRequestLocation,
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+                deletedAt: row.deleted_at,
+
+                user: {
+                    id: row.userId,
+                    lastKnownLocation: {
+                        latitude: row.user_last_known_latitude,
+                        longitude: row.user_last_known_longitude,
+                    },
+                    primaryLocation: {
+                        latitude: row.user_primary_latitude,
+                        longitude: row.user_primary_longitude,
+                    },
+                    email: row.email,
+                    phone: row.phone,
+                }
+            });
+            return request;
+        });
+
+        // [entities, total count]
+        return [donationRequests, results.length ? parseInt(results[0].total_count) : 0];
     }
 
     // Find a donation request by ID
@@ -125,58 +234,54 @@ export class DonationRepository {
         `;
 
         const query = `
-    SELECT 
-        u.*,
-        ST_Distance(
-            u."lastKnownLocation"::geography,
-            ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
-        ) AS distance_meters,
-        COALESCE(array_agg(t.token) FILTER (WHERE t.type = 'fcm' AND t.token IS NOT NULL), ARRAY[]::text[]) AS tokens
-    FROM "user" u
-    LEFT JOIN "token" t ON u."id"::uuid = t."userID"::uuid
-    WHERE ST_DWithin(
-            u."lastKnownLocation"::geography,
-            ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
-            $3
-        )
-        AND u."bloodGroup" = ANY ($4)
-        AND u."status" = 'active'
-        AND (u."lastDonationDate" IS NULL OR u."lastDonationDate" < NOW() - INTERVAL '56 days')
-        AND u."id"::uuid != $5::uuid
-        AND NOT EXISTS (
-            SELECT 1
-            FROM "donation_request"
-            WHERE "donation_request"."userId" = u."id"
-                AND "donation_request"."status" = 'open'
-                AND "donation_request"."requestFor" = 'self'
-        )
-    GROUP BY 
-        u.id, 
-        u."firstName",
-        u."lastName",
-        u."email",
-        u."phone",
-        u."password",
-        u."bloodGroup",
-        u."role",
-        u."user_source",
-        u."isVerified",
-        u."status",
-        u."googleId",
-        u."primaryLocation",
-        u."lastKnownLocation",
-        u."lastDonationDate",
-        u."createdAt",
-        u."updatedAt",
-        u."deletedAt"
-    ORDER BY distance_meters;
-`
+            SELECT u.*,
+                   ST_Distance(
+                           u."lastKnownLocation"::geography,
+                           ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+                   )                          AS distance_meters,
+                   COALESCE(array_agg(t.token) FILTER (WHERE t.type = 'fcm' AND t.token IS NOT NULL),
+                            ARRAY []::text[]) AS tokens
+            FROM "user" u
+                     LEFT JOIN "token" t ON u."id"::uuid = t."userID"::uuid
+            WHERE ST_DWithin(
+                    u."lastKnownLocation"::geography,
+                    ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+                    $3
+                  )
+              AND u."bloodGroup" = ANY ($4)
+              AND u."status" = 'active'
+              AND (u."lastDonationDate" IS NULL OR u."lastDonationDate" < NOW() - INTERVAL '56 days')
+              AND u."id"::uuid != $5::uuid
+              AND NOT EXISTS (SELECT 1
+                              FROM "donation_request"
+                              WHERE "donation_request"."userId" = u."id"
+                                AND "donation_request"."status" = 'open'
+                                AND "donation_request"."requestFor" = 'self')
+            GROUP BY u.id,
+                     u."firstName",
+                     u."lastName",
+                     u."email",
+                     u."phone",
+                     u."password",
+                     u."bloodGroup",
+                     u."role",
+                     u."user_source",
+                     u."isVerified",
+                     u."status",
+                     u."googleId",
+                     u."primaryLocation",
+                     u."lastKnownLocation",
+                     u."lastDonationDate",
+                     u."createdAt",
+                     u."updatedAt",
+                     u."deletedAt"
+            ORDER BY distance_meters;
+        `
 
 
         try {
             const result = await this.requestRepo.query(query, [longitude, latitude, radiusInMeters, compatibleBloodTypes, userId]);
 
-            // Convert raw results to User entities
             return result.map((row: any) => {
                 const user = new User();
                 Object.assign(user, {
