@@ -39,14 +39,14 @@
     "typeorm": "0.3.20"
   },
   "scripts": {
-    "watch": "tsc -w",
-    "dev": "nodemon build/app.js",
-    "start:dev": "concurrently \"tsc -w\" \"nodemon build/app.js\"",
-    "build": "tsc",
     "start": "node build/app.js",
+    "dev": "concurrently \"tsc -w\" \"nodemon build/app.js\"",
     "start:worker:all": "concurrently \"-node-dev src/bull/workers/donationRequest.worker.ts\" \"ts-node-dev src/bull/workers/email.worker.ts\" \"pn start:dev\"",
     "start:worker:donation": "ts-node-dev src/bull/workers/donationRequest.worker.ts",
     "start:worker:email": "ts-node-dev src/bull/workers/email.worker.ts",
+
+    "build": "tsc",
+    "watch": "tsc -w",
     "typeorm": "typeorm-ts-node-commonjs",
     "migration": "npm run typeorm migration:run -- -d ./src/infrastructure/database/data-source.ts",
     "start:insert:user:bulk": "ts-node-dev src/infrastructure/database/data/bulkInsert.ts",
