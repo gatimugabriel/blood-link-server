@@ -14,7 +14,7 @@ export const validateSignupInputs = [
     check("email", "Please include a valid email").isEmail(),
     // check("phone", "Phone is Required").isMobilePhone("en-KE").withMessage("Invalid phone number"),
     check("bloodGroup", "Your Blood Group is Required").isLength({ max: 2, min:1 }).withMessage("Invalid blood group"),
-    check("primaryLocation", "Your Primary Location is Required").isObject().withMessage("Invalid primary location"),
+    check("primaryLocation", "Your Primary Location is Required").isObject().withMessage("Invalid primary requestLocation"),
     check("confirmPassword", "Confirm password is required")
         .not().isEmpty()
         .isLength({ min: 6 })
@@ -42,10 +42,15 @@ export const validateRefreshBody = [
 
 // User Locations
 export const validateAddressInputs = [
-    check("primaryLocation", "Primary location is required").not().isEmpty(),
+    check("primaryLocation", "Primary requestLocation is required").not().isEmpty(),
     // check("town", "Town is required").not().isEmpty(),
     // check("street", "Street Address is required").not().isEmpty(),
     // check("phoneNumber", "Phone number is required").not().isEmpty(),
+]
+
+export const validateCoords= [
+    check("latitude", "latitude is required").not().isEmpty().isNumeric().withMessage("Co-ordinate point must be a number"),
+    check("longitude", "longitude is required").not().isEmpty().isNumeric().withMessage("Co-ordinate point must be a number"),
 ]
 
 export const validateRangeBody =[

@@ -1,4 +1,4 @@
-import { UserRepository } from "../../infrastructure/repositories/userRepository";
+import { UserRepository } from "../../domain/repositories/userRepository";
 import { createPoint } from "../../utils/database";
 import bcrypt from "bcrypt";
 import { UserTokenDto } from "../dtos/userDto";

@@ -1,4 +1,4 @@
-import {firebaseAdmin} from "../../config/firebase/firebase.config";
+import {firebaseAdmin} from "../config/firebase/firebase.config";
 import {User} from "../../domain/entity/User";
 import mailerUtil from "../../utils/mailer";
 

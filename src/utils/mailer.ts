@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import { NextFunction, Response } from 'express';
 import crypto from 'crypto';
-import { mailConfig } from "../config/mail.config";
+import { mailConfig } from "../application/config/mail.config";
 import { ExtendedRequest } from "../types/custom";
 import { User } from "../domain/entity/User";
 

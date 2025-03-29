@@ -2,6 +2,7 @@ import {Router} from 'express';
 import {UserController} from '../controller/userController';
 import validationMiddleware from "../middleware/inputValidation/index";
 import {verifyToken} from "../middleware/auth";
+import {validateCoords} from "../middleware/inputValidation/user";
 
 const router = Router()
 const userController = new UserController()
@@ -14,19 +15,19 @@ router.use(verifyToken("access"))
 
 router.post('/fcm-token', userController.saveFcmToken.bind(userController))
 
-// router.route('/set-address').post(
-//     [
-//         inputValidationMiddleware.requireBody,
-//         ...inputValidationMiddleware.addressInputs,
-//         inputValidationMiddleware.validate
-//     ], userController.setAddress
-// ).put(
-//     [
-//         inputValidationMiddleware.requireBody,
-//         ...inputValidationMiddleware.addressInputs,
-//         inputValidationMiddleware.validate
-//     ], userController.updateAddress
-// );
+router.route('/location').post(
+    [
+        requireBody,
+        ...validateCoords,
+        validate
+    ], userController.setLocation
+).put(
+    [
+        requireBody,
+        ...validateCoords,
+        validate
+    ], userController.setLocation
+);
 
 //  -- User Profile Routes -- //
 router.route('/').get(userController.getUser.bind(userController))
