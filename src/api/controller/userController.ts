@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { UserService } from "../../application/services/userService";
-import { UserRepository } from "../../infrastructure/repositories/userRepository";
+import { UserRepository } from "../../domain/repositories/userRepository";
 import { users } from "../../infrastructure/database/data/users";
 import { ExtendedRequest } from "../../types/custom";
-import { firebaseAdmin } from "../../config/firebase/firebase.config";
+import { firebaseAdmin } from "../../application/config/firebase/firebase.config";
 import { token } from "morgan";
 
 export class UserController {
@@ -55,6 +55,15 @@ export class UserController {
             res.status(201).json({ message: "FCM token saved", data });
         } catch (error) {
             next(error)
+        }
+    }
+
+    async setLocation(req: ExtendedRequest, res: Response, next: NextFunction){
+        try{
+            console.log("User Location updated")
+        }catch (e) {
+            console.error(e)
+            next(e)
         }
     }
 }

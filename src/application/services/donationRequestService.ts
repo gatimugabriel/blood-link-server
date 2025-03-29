@@ -1,11 +1,11 @@
-import {donationRequestQueue} from "../../bull/queues";
+import {donationRequestQueue} from "../../infrastructure/bull/queues";
 import {DonationRequest} from "../../domain/entity/DonationRequest";
 import {User} from "../../domain/entity/User";
-import {DonationRepository} from "../../infrastructure/repositories/donationRepository";
+import {DonationRepository} from "../../domain/repositories/donationRepository";
 import {createPoint} from "../../utils/database";
 import {CreateDonationRequestDto} from "../dtos/donationRequestDto";
 import {BloodType} from "../../domain/value-objects/bloodType";
-import {UserRepository} from "../../infrastructure/repositories/userRepository";
+import {UserRepository} from "../../domain/repositories/userRepository";
 import {Donation} from "../../domain/entity/Donation";
 
 export class DonationRequestService {
@@ -110,10 +110,10 @@ export class DonationRequestService {
 
         // Check if the request exists and is still open
         const request = await this.donationRepository.findRequest(requestID)
-        if (!request || request[0].status !== 'open') {
+        if (!request || request.status !== 'open') {
             throw new Error('Donation request not found or no longer open');
         }
-        if (request[0].user.id === userID) {
+        if (request.user.id === userID) {
             throw new Error('You cannot donate to yourself');
         }
 
@@ -129,7 +129,7 @@ export class DonationRequestService {
 
     //--- Get single donation request ---//
     // @param requestID 
-    async getDonationRequest(requestID: string): Promise<DonationRequest[]> {
+    async getDonationRequest(requestID: string): Promise<DonationRequest | null> {
         return await this.donationRepository.findRequest(requestID);
     }
 

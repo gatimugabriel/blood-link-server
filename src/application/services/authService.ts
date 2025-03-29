@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import {UserRepository} from "../../infrastructure/repositories/userRepository";
+import {UserRepository} from "../../domain/repositories/userRepository";
 import {CreateUserDto, LoginUserDto, UserTokenDto} from "../dtos/userDto";
 import {Token, User} from "../../domain/entity/User";
 import {encryptPayload} from "../../utils/encryption";

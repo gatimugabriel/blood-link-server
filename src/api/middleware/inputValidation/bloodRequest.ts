@@ -10,7 +10,7 @@ export const validateDonationRequestInput = [
             return true
         }),
     check("units", "Number of units is Required").notEmpty().withMessage("you need the  'units' input"),
-    check("requestLocation", "Request Location is Required").isObject().withMessage("Invalid location"),
+    check("requestLocation", "Request Location is Required").isObject().withMessage("Invalid requestLocation"),
 ]
 
 export const validateDonationRequestInputForSomeoneElse = [
@@ -19,7 +19,7 @@ export const validateDonationRequestInputForSomeoneElse = [
     check("healthFacility", "Health Facility name is Required").notEmpty().withMessage("you need the  'healthFacility' input"),
     check("patientName", "Patient Name is Required").notEmpty().withMessage("you need the  'patientname' input"),
     check("gender", "Gender is Required").notEmpty().withMessage("you need the  'gender' input"),
-    check("requestLocation", "Request Location is Required").isObject().withMessage("Invalid location"),
+    check("requestLocation", "Request Location is Required").isObject().withMessage("Invalid requestLocation"),
     check("requestingFor", "Requesting For is Required")
         .notEmpty().withMessage("you need the  'requestingFor' input")
         .equals("other").withMessage("requestingFor must be 'other' for this type of request")

@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { UserTokenDto } from "../../application/dtos/userDto";
 import { AuthService } from "../../application/services/authService";
 import { Token } from "../../domain/entity/User";
-import { UserRepository } from "../../infrastructure/repositories/userRepository";
+import { UserRepository } from "../../domain/repositories/userRepository";
 import { ExtendedRequest } from "../../types/custom";
 import { encryptPayload } from "../../utils/encryption";
 
