@@ -1,7 +1,7 @@
 import {Router} from 'express';
 import {UserController} from '../controller/userController';
 import validationMiddleware from "../middleware/inputValidation/index";
-import {verifyToken} from "../middleware/auth";
+import {authenticate} from "../middleware/auth/auth.middleware";
 import {validateCoords} from "../middleware/inputValidation/user";
 
 const router = Router()
@@ -10,7 +10,7 @@ const {requireBody, validate, validateRangeBody} = validationMiddleware;
 
 router.post('/insertMany', userController.insertManyUsers.bind(userController))
 
-router.use(verifyToken("access"))
+router.use(authenticate)
 // authenticate all routes below
 
 router.post('/fcm-token', userController.saveFcmToken.bind(userController))
