@@ -102,8 +102,8 @@ export class DonationRepository {
 
             SELECT *,
 --                    (SELECT COUNT(*) FROM filtered_requests) AS total_count
-                    (SELECT COUNT(*) FROM donation_request WHERE "status" = 'open') AS total_count, -- Total unfiltered count
-                    (SELECT COUNT(*) FROM filtered_requests) AS filtered_count -- Count of filtered records
+                   (SELECT COUNT(*) FROM donation_request WHERE "status" = 'open') AS total_count,   -- Total unfiltered count
+                   (SELECT COUNT(*) FROM filtered_requests)                        AS filtered_count -- Count of filtered records
             FROM filtered_requests
             ORDER BY distance_meters ASC
             LIMIT $4 OFFSET $5

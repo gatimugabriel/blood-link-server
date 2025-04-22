@@ -5,6 +5,7 @@ import {Token} from "../../domain/entity/User";
 import {UserRepository} from "../../domain/repositories/userRepository";
 import {ExtendedRequest} from "../../types/custom";
 import {generateAuthTokens} from "../../utils/token";
+import bcrypt from "bcrypt";
 
 export class AuthController {
     private readonly authService: AuthService;
@@ -78,6 +79,54 @@ export class AuthController {
             res.json({accessToken, refreshToken});
         } catch (error) {
             next(error);
+        }
+    }
+
+    async adminLogin(req: Request, res: Response) {
+        const { email, password } = req.body;
+
+        try {
+            const user = await this.userRepo.findUser({where: {email}})
+            if (!user || (user.role).toUpperCase() !== 'ADMIN') {
+                res.status(401)
+                res.render('auth/login', {
+                    title: 'Admin Login',
+                    error: 'Insufficient Permissions. Access denied for this user.'
+                });
+                return
+            }
+
+            const isValid = await bcrypt.compare(password, user.password);
+            if (!isValid) {
+                res.status(401)
+                res.render('auth/login', {
+                    title: 'Admin Login',
+                    error: 'Invalid credentials'
+                });
+                return
+            }
+
+            const {accessToken, refreshToken} = generateAuthTokens(user.id, user.role, user.email)
+
+            // Set cookies
+            res.cookie('accessToken', accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 15 * 60 * 1000
+            });
+
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 24 * 60 * 60 * 1000
+            });
+
+            res.redirect('/admin/donations');
+        } catch (error) {
+            res.render('admin/auth/login', {
+                title: 'Admin Login',
+                error: 'An error occurred. Please try again.'
+            });
         }
     }
 

@@ -14,6 +14,7 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.10.1",
     "@types/nodemailer": "^6.4.17",
+    "fs-extra": "^11.1.1",
     "ts-node": "10.9.1",
     "typescript": "5.6.2"
   },
@@ -22,12 +23,12 @@
     "bullmq": "^5.30.0",
     "compression": "^1.7.5",
     "concurrently": "^9.1.0",
+    "connect-redis": "^7.1.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "express-validator": "^7.2.0",
-    "firebase-admin": "^13.0.2",
     "jsonwebtoken": "^9.0.2",
     "memory-cache": "^0.2.0",
     "morgan": "^1.10.0",
@@ -42,11 +43,12 @@
   },
   "scripts": {
     "start": "node build/app.js",
-    "dev": "concurrently \"tsc -w\" \"nodemon build/app.js\"",
-    "start:worker:all": "concurrently \"-node-dev src/infrastructure/bull/workers/donationRequest.worker.ts\" \"ts-node-dev src/bull/workers/email.worker.ts\" \"pn start:dev\"",
+    "dev": "ts-node-dev src/app.ts",
+    "dev2": "concurrently \"tsc -w\" \"nodemon build/app.js\"",
+    "start:worker:all": "concurrently \"-node-dev src/infrastructure/bull/workers/donationRequest.worker.ts\" \"ts-node-dev src/infrastructure/bull/workers/email.worker.ts\"",
     "start:worker:donation": "ts-node-dev src/infrastructure/bull/workers/donationRequest.worker.ts",
     "start:worker:email": "ts-node-dev src/infrastructure/bull/workers/email.worker.ts",
-    "build": "tsc",
+    "build": "tsc && node src/scripts/copyViews.js",
     "watch": "tsc -w",
     "typeorm": "typeorm-ts-node-commonjs",
     "migration": "npm run typeorm migration:run -- -d ./src/infrastructure/database/data-source.ts",
@@ -58,5 +60,12 @@
     "logs:pm2": "pm2 logs",
     "delete:pm2": "pm2 delete ecosystem.config.js",
     "save:pm2": "pm2 save"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "bcrypt",
+      "msgpackr-extract",
+      "protobufjs"
+    ]
   }
 }

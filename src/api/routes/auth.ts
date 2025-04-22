@@ -1,6 +1,6 @@
 import {Router} from "express";
 import {AuthController} from "../controller/authController";
-import {authenticate, validateRefreshToken} from "../middleware/auth/auth.middleware";
+import {validateRefreshToken} from "../middleware/auth/auth.middleware";
 import validationMiddleware from "../middleware/inputValidation";
 
 const router = Router();
