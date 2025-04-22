@@ -1,6 +1,6 @@
 import {FindManyOptions, FindOneOptions, Repository} from "typeorm";
-import {Token, User} from "../../domain/entity/User";
-import {DB} from "../database/data-source";
+import {Token, User} from "../entity/User";
+import {DB} from "../../infrastructure/database/data-source";
 
 // Contains all the database operations related to the User entity
 // includes the Token entity also for User tokens operations

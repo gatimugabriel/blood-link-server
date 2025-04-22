@@ -1,12 +1,12 @@
 // This worker listens to the donationRequestsQueue and processes donation requests by sending notifications to nearby donors
 import { Job, Worker } from 'bullmq';
-import { DonationRequestService } from '../../application/services/donationRequestService';
-import { NotificationService } from '../../application/services/notificationService';
-import { UserService } from '../../application/services/userService';
-import { redisConfig } from '../../config/database.config';
-import { DB } from '../../infrastructure/database/data-source';
-import { DonationRepository } from '../../infrastructure/repositories/donationRepository';
-import { UserRepository } from '../../infrastructure/repositories/userRepository';
+import { DonationRequestService } from '../../../application/services/donationRequestService';
+import { NotificationService } from '../../../application/services/notificationService';
+import { UserService } from '../../../application/services/userService';
+import { redisConfig } from '../../../application/config/database.config';
+import { DB } from '../../database/data-source';
+import { DonationRepository } from '../../../domain/repositories/donationRepository';
+import { UserRepository } from '../../../domain/repositories/userRepository';
 
 const donationRepository = new DonationRepository();
 const userRepository = new UserRepository();

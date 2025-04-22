@@ -1,4 +1,3 @@
-import {firebaseAdmin} from "../../config/firebase/firebase.config";
 import {User} from "../../domain/entity/User";
 import mailerUtil from "../../utils/mailer";
 
@@ -50,29 +49,6 @@ export class NotificationService {
             return response;
         } catch (error) {
             console.error('Error sending expo push notification:', error);
-            throw error;
-        }
-    }
-
-    async sendFirebasePushNotification(fcmToken: string, data: any) {
-        try {
-            const message = {
-                notification: {
-                    title: data.title,
-                    body: data.subTitle
-                },
-                data: {
-                    type: "DONATION_REQUEST",
-                    ...data.body
-                },
-                token: fcmToken
-            }
-
-            const response = await firebaseAdmin.messaging().send(message);
-            console.log('Successfully sent firebase push notification:', response);
-            return response;
-        } catch (error) {
-            console.error('Error sending firebase push notification:', error);
             throw error;
         }
     }

@@ -1,18 +1,24 @@
-import express from "express";
-import dotenv from "dotenv";
+import compression from "compression";
+import cookieParser from "cookie-parser";
 import cors from "cors";
+import dotenv from "dotenv";
+import express from "express";
 import morgan from "morgan";
-import cookieParser from "cookie-parser"
-import compression from "compression"
 import "reflect-metadata";
-import routes from "./api/routes";
-import { DB } from "./infrastructure/database/data-source";
 import errorMiddleware from "./api/middleware/errorMiddleware";
+import routes from "./api/routes";
+import adminRoutes from "./api/routes/admin";
+import { DB } from "./infrastructure/database/data-source";
+
 dotenv.config();
 
 const app = express();
-const PORT = parseInt(process.env["PORT"] as string) || 8080
-const HOST = process.env["HOST"]  || `0.0.0.0`
+
+app.use(express.json({limit: '10mb'}));
+app.use(express.urlencoded({extended: true, limit: '10mb'}));
+app.use(morgan('dev'));
+app.use(cookieParser())
+app.use(compression())
 
 // --- CORS ---//
 const allowedOrigins = [
@@ -30,22 +36,21 @@ const corsOptions = {
 app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
 
-app.use(cookieParser())
-app.use(compression())
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(morgan('dev'));
-
 // -- ROUTES -- //
+app.use('/api/admin', adminRoutes); //admin
+
 const base_api = "/api/v1";
-routes(app, base_api)
+routes(app, base_api) //other
 
 // --- Error Handling --- //
 app.use(errorMiddleware.notFound);
 app.use(errorMiddleware.errorHandler);
 
+const PORT = parseInt(process.env["PORT"] as string) || 8080
+const HOST = process.env["HOST"] || `0.0.0.0`
+
 // connect DB & start server
-DB.initialize() 
+DB.initialize()
     .then(() => {
         console.log("Data Source has been initialized!");
         app.listen(PORT, HOST, () => {

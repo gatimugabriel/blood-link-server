@@ -1,10 +1,9 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import {UserRepository} from "../../infrastructure/repositories/userRepository";
+import {UserRepository} from "../../domain/repositories/userRepository";
 import {CreateUserDto, LoginUserDto, UserTokenDto} from "../dtos/userDto";
 import {Token, User} from "../../domain/entity/User";
-import {encryptPayload} from "../../utils/encryption";
 import {createPoint} from "../../utils/database";
+import {generateAuthTokens} from "../../utils/token";
 
 export class AuthService {
     constructor(private readonly userRepository: UserRepository) {
@@ -53,16 +52,7 @@ export class AuthService {
             throw new Error("Invalid credentials");
         }
 
-        // --- encrypt payload in JWT token --- //
-        const payload = {
-            userID: user.id,
-            userRole: user.role,
-            email: user.email
-        }
-        const encryptedPayload = encryptPayload(payload);
-
-        const accessToken = jwt.sign({data: encryptedPayload}, process.env["JWT_SECRET_ACCESS_TOKEN"] as string, {expiresIn: "15m"});
-        const refreshToken = jwt.sign({data: encryptedPayload}, process.env["JWT_SECRET_REFRESH_TOKEN"] as string, {expiresIn: "20d"});
+        const {accessToken, refreshToken} = generateAuthTokens(user.id, user.role, user.email)
 
         // --- save refresh token to DB ---//
         const tokenData: UserTokenDto = {
@@ -86,7 +76,13 @@ export class AuthService {
 
     //get auth credentials
     async getAuthCredentials(userID: string, tokenString: string, tokenType: string): Promise<Token> {
-        const userToken = await this.userRepository.findUserToken({ where: { userID, token: tokenString, type: tokenType } });
+        const userToken = await this.userRepository.findUserToken({
+            where: {
+                userID,
+                token: tokenString,
+                type: tokenType
+            }
+        });
         if (!userToken) {
             throw new Error(`Invalid ${tokenType} Token`);
         }

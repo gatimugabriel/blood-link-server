@@ -23,7 +23,7 @@ export const DB = new DataSource({
 
     // ssl: {
     //     rejectUnauthorized: true,
-    //     ca: [fs.readFileSync(path.resolve(__dirname, "../../../src/certs/database.pem")).toString()]
+    //     ca: [fs.readFileSync(path.resolve(__dirname, "../../../src/security/database.pem")).toString()]
     // },
 
     // poolSize: 10,

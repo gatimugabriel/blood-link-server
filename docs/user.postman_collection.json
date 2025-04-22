@@ -1,0 +1,107 @@
+{
+	"info": {
+		"_postman_id": "4862dab3-7a48-4999-88b5-937d496de261",
+		"name": "user",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "24249138"
+	},
+	"item": [
+		{
+			"name": "Bulk Insert",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": "{{baseURL}}/user/insertMany"
+			},
+			"response": []
+		},
+		{
+			"name": "save FCM token",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"fcmToken\": \"ExponentPushToken[otzM7GBDqYKvN3Soibvc5w]\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseURL}}/user/fcm-token",
+				"description": "Used for push/remote notifications"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Users within Range",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZDExYmYwNmZlMjM4MWRkYWNmYTgxMDRhN2VlNzE2MWFmMTI2MjVlMzMzMzIwYTA2Y2FkNDllNDRkZGI2YzI1NjA4ZTVlYTMzNGJjYWMzZWUxYTk1MjUxZTRkMDg0ZmI3Mzk1OTlmYjRlOGRlMWZhNWJjZmZkYzgwOThhMjVjZDI5YmZmODUzMjJjMjg3YTlkNTY3ZDA1YzQyNjM4ZWRjNzEzYmM5M2Q3MzM4YTA0NzdkODgyMDBkMGNjN2IxYjBlIiwiaWF0IjoxNzI4NDc5MjI1LCJleHAiOjE3Mjg0ODI4MjV9.TQfU5k0Zjas0Hwr6kn3ToFlCFGx51luz6bolFbW7FYA"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"latituded\": -1.4931207,\n    \"longituded\": 36.9559541,\n    \"latitude\": 44.44,\n    \"longitude\": 44.55,\n    \"radius\": 50000\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseURL}}/user/range"
+			},
+			"response": []
+		},
+		{
+			"name": "Get",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiNzdjNjM3MzYwMTlkODc0YjZhNjQzMmUzNTYxNmU0N2Y4ODFhODZhZGI2M2E2MGRhMjgzMWIyNTE4MzljMzdmODZlY2FiNmIzYmYyNGNlODkxOTMyM2RjYzdiNzUyNzlkMmM1Mzg4MDljNmI0MWY4NGFkODBkNzNmMmU0ZWQ1ZTNjNjA1NTY0NzExOTZmOTRkMGQzYjkwOWM2ZjlhZDBkOWQ1YTAzMTc3MGNiMmU2NDI3NzBhNjk3NmVlMTM4NTQyIiwiaWF0IjoxNzMzMjkxMjE3LCJleHAiOjE3MzMyOTQ4MTd9.5L83K6vb4GPXksyrSm5onKqZu0VTRxIk1cHKn0JG1gM"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"url": "{{baseURL}}/user"
+			},
+			"response": []
+		},
+		{
+			"name": "Get User Donation Requests",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{baseURL}}/donation/request/me"
+			},
+			"response": []
+		},
+		{
+			"name": "Send Notification",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"message\": {\n        \"title\": \"New Donation Request!\",\n        \"subTitle\": \"There is a new request that needs your help\",\n        \"body\": {\n            \"location\": {\n                \"latitude\": 34.0789,\n                \"longitude\": 34.0789\n            }\n        }\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseURL}}/user/notification"
+			},
+			"response": []
+		}
+	]
+}

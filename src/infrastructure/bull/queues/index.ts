@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import { redisConfig } from "../../config/database.config";
+import { redisConfig } from "../../../application/config/database.config";
 
 //---  initialize queues ---//
 

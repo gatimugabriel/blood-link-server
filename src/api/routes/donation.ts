@@ -1,7 +1,7 @@
 import { Router } from "express";
 import validationMiddleware from "../middleware/inputValidation/index";
 import { DonationRequestController } from "../controller/donationRequestController";
-import { verifyToken } from "../middleware/auth";
+import { authenticate } from "../middleware/auth/auth.middleware";
 
 const router = Router();
 const { validateDonationRequestInput, validateDonationRequestInputForSomeoneElse, requireBody, validate } = validationMiddleware;
@@ -14,7 +14,7 @@ router.route('/request/:requestID')
     .delete(controller.deleteDonationRequest.bind(controller));
 
 // Authenticated routes
-router.use(verifyToken("access"))
+router.use(authenticate)
 
 /*//--- DonationRequest Routes ---//*/
 router.post('/request', [

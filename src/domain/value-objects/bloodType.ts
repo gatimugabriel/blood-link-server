@@ -9,21 +9,4 @@ export enum BloodType{
     O_NEGATIVE = "O-"
 }
 
-export class BloodGroup {
-    private readonly value: BloodType;
 
-    constructor(value: BloodType) {
-        if (!this.isValidBloodType(value)) {
-            throw new Error("Invalid blood type");
-        }
-        this.value = value;
-    }
-
-    private isValidBloodType(value: BloodType): boolean {
-        return Object.values(BloodType).includes(value);
-    }
-
-    getValue(): BloodType {
-        return this.value;
-    }
-}

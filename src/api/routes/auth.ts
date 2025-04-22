@@ -1,10 +1,9 @@
 import {Router} from "express";
 import {AuthController} from "../controller/authController";
-import {verifyToken} from "../middleware/auth";
+import {validateRefreshToken} from "../middleware/auth/auth.middleware";
 import validationMiddleware from "../middleware/inputValidation";
 
 const router = Router();
-
 const authController = new AuthController();
 const {requireBody, validateMobileVerification, validateEmailVerification, validateSignupInputs, validateRefreshBody, validate} = validationMiddleware;
 
@@ -18,13 +17,12 @@ router.post('/signup', [requireBody, ...validateSignupInputs, validate], authCon
 router.post('/signin', requireBody, authController.signin.bind(authController));
 router.post('/signout', [
     requireBody, ...validateRefreshBody, validate,
-    verifyToken("access"),
-    verifyToken("refresh")
+    validateRefreshToken
 ], authController.signout.bind(authController));
 
 router.post('/refresh', [
     requireBody, ...validateRefreshBody, validate,
-    verifyToken("refresh")
+    validateRefreshToken
 ], authController.refreshToken.bind(authController));
 
 export default router;
