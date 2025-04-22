@@ -1,0 +1,88 @@
+{
+	"info": {
+		"_postman_id": "65aa2d9a-6df0-4e61-994d-202524016b8c",
+		"name": "donation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "24249138"
+	},
+	"item": [
+		{
+			"name": "Requests",
+			"item": [
+				{
+					"name": "Request a Donation",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiMjhhYjM1YzYxMzAzZDQ5NzhlOWJiMGZkOWM1MDUwN2RjZDUwNjcwNTk3NDlhNWNmMjdjNDkzNzc1OGYzNDY4MTZhOWI3YWJkZTliZjYzZjVmNjgyZjM2OGVlZjFiOTUyNTg0MGU5ZTAzOGQ4NjZhYTE2NjM0OGE4NDgzOTUyYmRmMDVhZmNmNGJmZGU2YjRiZWRmYTAyYzA1MTdmYTgwNWM5M2MxNmU3OWU2OGNhYjViNGQ1ZjQ4MmVhN2Q2ZDFkIiwiaWF0IjoxNzI5ODU1NDUyLCJleHAiOjE3Mjk4NTkwNTJ9.JYsyJ1Xv3jjC882JsqO6SLYZgMFa9evQKR1KApyxlH4"
+							}
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"units\": 8,\n    \"urgency\": \"low\",\n    \"requestLocation\": {\n          \"latitude\": -3.7128,\n            \"longitude\": 36.0060\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseURL}}/donation/request"
+					},
+					"response": []
+				},
+				{
+					"name": "Request Donation for  Someone Else",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"patientName\":\"John Doe\",\n    \"gender\":\"male\",\n    \"healthFacility\":\"Town Hospital\",\n    \"units\": 8,\n    \"bloodGroup\": \"O-\",\n    \"urgency\": \"low\",\n    \"requestLocation\": {\n          \"latitude\": -3.7128,\n            \"longitude\": 36.0060\n    },\n    \"requestingFor\":\"other\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseURL}}/donation/request/other-person"
+					},
+					"response": []
+				},
+				{
+					"name": "Confirm Availability",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": "{{baseURL}}/donation/donate/confirm-availability/09bef482-ff29-4e4f-9f5b-996e0934d2be"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Open Requests",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseURL}}/donation/request/open"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Donation Request",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseURL}}/donation/request/09bef482-ff29-4e4f-9f5b-996e0934d2be"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Donations",
+			"item": []
+		}
+	]
+}

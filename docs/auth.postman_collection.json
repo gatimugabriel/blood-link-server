@@ -1,0 +1,112 @@
+{
+	"info": {
+		"_postman_id": "4de9a861-f037-4852-922f-18bb54e67913",
+		"name": "auth",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "24249138"
+	},
+	"item": [
+		{
+			"name": "Signup",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "    {\n        \"firstName\": \"New\",\n        \"lastName\": \"Guy\",\n        \"email\": \"newguy@gmail.com\",\n        \"phone\": \"+254711100012\",\n        \"password\": \"Password#1\",\n        \"confirmPassword\": \"Password#1\",\n        \"bloodGroup\": \"O-\",\n        \"primaryLocation\": {\n            \"latitude\": 40.2628,\n            \"longitude\": -74.7060\n        },\n        \"lastKnownLocation\": {\n            \"latitude\": 40.7128,\n            \"longitude\": -74.0060\n        }\n    }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseURL}}/auth/signup"
+			},
+			"response": []
+		},
+		{
+			"name": "Signin",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"newguy@gmail.com\",\n    \"password\": \"Password#1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseURL}}/auth/signin"
+			},
+			"response": []
+		},
+		{
+			"name": "Signout",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiNTAxNDViNWNkNDEwNzgzMzk5ZjlhYjc1MmNhNWYzYzc5ZDQ5NTcwMjcyZjFhZThlMDU3YTU0NjJkODg0OGZlMWYyNzM5ZDFhY2I0YjljMzA2ZDcxMGNmNmZjNTc2YTVmOWRmZmRhMGQ5MmM0ZDFjZGVlZDE2OTUxMjI3YjRiNjJjZmE1ODZmMDY2NzNlNzg5Y2RhNjczZmZhZWY5MTdlNTllMGIyYWRiOThmOWIxMTA0OTAyZTdmMjZiNGM2NGVmIiwiaWF0IjoxNzI3OTc4MjU2LCJleHAiOjE3Mjc5ODE4NTZ9.thIQvmPtSaelZfNsRT1F8E0oOTgYtb9KcDAMH0yPE84"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"refreshToken\": \"fsdf\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseURL}}/auth/signout"
+			},
+			"response": []
+		},
+		{
+			"name": "Refresh  Access Token",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiNTAxNDViNWNkNDEwNzgzMzk5ZjlhYjc1MmNhNWYzYzc5ZDQ5NTcwMjcyZjFhZThlMDU3YTU0NjJkODg0OGZlMWYyNzM5ZDFhY2I0YjljMzA2ZDcxMGNmNmZjNTc2YTVmOWRmZmRhMGQ5MmM0ZDFjZGVlZDE2OTUxMjI3YjRiNjJjZmE1ODZmMDY2NzNlNzg5Y2RhNjczZmZhZWY5MTdlNTllMGIyYWRiOThmOWIxMTA0OTAyZTdmMjZiNGM2NGVmIiwiaWF0IjoxNzI3MDEwNjkxLCJleHAiOjE3MjcwMTQyOTF9.DLkbglEyCUQOrzShxfvXEBx8JjuAx_WYgzVqkK7hnJc"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiNzdjNjM3MzYwMTlkODc0YjZhNjQzMmUzNTYxNmU0N2Y4ODFhODZhZGI2M2E2MGRhMjgzMWIyNTE4MzljMzdmODZlY2FiNmIzYmYyNGNlODkxOTMyM2RjYzdiNzUyNzlkMmM1Mzg4MDljNmI0MWY4NGFkODBkNzNmMmU0ZWQ1ZTNjNjA1NTY0NzExOTZmOTRkMGQzYjkwOWM2ZjlhZDBkOWQ1YTAzMTc3MGNiMmU2NDI3NzBhNjk3NmVlMTM4NTQyIiwiaWF0IjoxNzMzNDA4MTc1LCJleHAiOjE3MzM0MDgyMDV9.UkDX9acjn5ezjmT7NIG5mm9aWfOpVzQK9AKSVcy7axg\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseURL}}/auth/refresh"
+			},
+			"response": []
+		},
+		{
+			"name": "Verify Mobile",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"phoneNumber\": \"+254796677429\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseURL}}/auth/verify-mobile"
+			},
+			"response": []
+		}
+	]
+}

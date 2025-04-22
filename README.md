@@ -14,6 +14,9 @@ This is a real-time blood donation and connection app system built with Node, Ty
   - [Setup \& Installation](#setup--installation)
     - [Manual Setup](#manual-setup)
     - [Docker Setup](#docker-setup)
+  - [Data Flow](#data-flow)
+  - [Troubleshooting](#troubleshooting)
+    - [Common Issues](#common-issues)
   - [API Documentation](#api-documentation)
   - [Database Schema](#database-schema)
   - [Development Guidelines](#development-guidelines)
@@ -46,32 +49,29 @@ The structure
     ├── api
     │   ├── controller
     │   ├── middleware
+    │   │   ├── auth
     │   │   └── inputValidation
     │   └── routes
     ├── application
+    │   ├── config
     │   ├── dtos
     │   └── services
-    ├── bull
-    │   ├── queues
-    │   └── workers
-    ├── certs
-    ├── config
-    │   └── firebase
     ├── domain
     │   ├── aggregates
     │   ├── entity
+    │   ├── repositories
     │   └── value-objects
     ├── infrastructure
-    │   ├── database
-    │   │   ├── data
-    │   │   ├── migrations
-    │   │   └── raw_queries
-    │   ├── external-services
-    │   └── repositories
+    │   ├── bull
+    │   │   ├── queues
+    │   │   └── workers
+    │   └── database
+    │       ├── data
+    │       ├── migrations
+    │       └── raw_queries
+    ├── security
     ├── types
     └── utils
-
-
 ```
 
 
@@ -140,6 +140,48 @@ docker-compose up --build
 
 The application will be available at `http://localhost:8080`
 
+
+## Data Flow
+The Blood Link Server processes donation requests and matches them with potential donors through a location-based matching system.
+
+```ascii
+User Request -> Auth Layer -> Business Logic -> Notification System
+     |              |             |                    |
+     v              v             v                    v
+  Location     Validation    Donor Match        Push Message
+   Data          Layer        Algorithm         to Donors
+```
+
+Key Component Interactions:
+1. Authentication service validates user credentials and manages sessions
+2. Geolocation service tracks donor and request locations
+3. Matching engine finds compatible donors within specified radius
+4. Notification service alerts potential donors of nearby requests
+5. Request management tracks donation status and updates
+6. User service manages donor profiles and preferences
+7. Security layer ensures data privacy and access control
+
+## Troubleshooting
+
+### Common Issues
+
+1. Authentication Failures
+- Error: "Invalid token"
+  - Verify token expiration
+  - Ensure proper token format in Authorization header
+  - Use refresh token endpoint to get new access token
+
+2. Geolocation Issues
+- Error: "Invalid coordinates"
+  - Ensure latitude is between -90 and 90
+  - Ensure longitude is between -180 and 180
+  - Check coordinate format (decimal degrees)
+
+3. Push Notification Failures
+  - Error: "FCM token invalid"
+  - Verify FCM token is properly registered
+  - On client-side, ensure device has proper permissions
+
 ## API Documentation
 Detailed API documentation can be found in [docs/api.md](docs/api.md)
 
@@ -148,9 +190,6 @@ Database schema and relationships are documented in [docs/database.md](docs/data
 
 ## Development Guidelines
 Please refer to [docs/development.md](docs/development.md) for coding standards, best practices, and contribution guidelines.
-
-
-```
 
 ## Deployment
 Deployment instructions and considerations can be found in [docs/deployment.md](docs/deployment.md)
