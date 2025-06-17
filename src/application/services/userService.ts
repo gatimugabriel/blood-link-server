@@ -3,9 +3,65 @@ import { createPoint } from "../../utils/database";
 import bcrypt from "bcrypt";
 import { UserTokenDto } from "../dtos/userDto";
 import { Token } from "../../domain/entity/User";
+import { User } from "../../domain/entity/User";
 
 export class UserService {
     constructor(private readonly userRepository: UserRepository) {
+    }
+
+    async createUser(userData: any): Promise<User> {
+        const defaultValues = {
+            role: "user",
+            user_source: "email",
+            isVerified: false,
+            status: "active", // Set to active for seeded users
+            googleId: null,
+            lastDonationDate: null,
+        };
+
+        const dataToSave = {...defaultValues, ...userData};
+
+        if (!userData.primaryLocation) {
+            dataToSave.primaryLocation = createPoint(dataToSave.lastKnownLocation.latitude, dataToSave.lastKnownLocation.longitude)
+        } else {
+            dataToSave.primaryLocation = createPoint(dataToSave.primaryLocation.latitude, dataToSave.primaryLocation.longitude)
+        }
+
+        dataToSave.lastKnownLocation = createPoint(dataToSave.lastKnownLocation.latitude, dataToSave.lastKnownLocation.longitude)
+        dataToSave.password = bcrypt.hashSync(dataToSave.password, 10);
+        dataToSave.email = dataToSave.email.toLowerCase();
+
+        const newUser = new User();
+        Object.assign(newUser, dataToSave);
+
+        return this.userRepository.saveUser(newUser);
+    }
+
+    async listUsers (
+        page: number,
+        limit: number,
+        latitude?: number,
+        longitude?: number,
+        radius?: number,
+        sortBy: string = 'createdAt',
+        sortOrder: 'asc' | 'desc' = 'desc',
+        status?: string,
+        search?: string,
+        bloodGroup?: string,
+    ):Promise<[User[], number]> {
+        const offset = (page - 1) * limit;
+        return await this.userRepository.listUsers2(
+            offset,
+            limit,
+            latitude,
+            longitude,
+            radius,
+            sortBy,
+            sortOrder.toUpperCase() as "ASC" | "DESC",
+            status,
+            search,
+            bloodGroup,
+        )
     }
 
     //  get  users within a specified range(radius distance in meters)

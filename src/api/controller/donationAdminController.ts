@@ -6,48 +6,6 @@ import { Between } from "typeorm";
 export class DonationAdminController {
     private donationRepository = DB.getRepository(Donation);
 
-    async getAllDonations(req: Request, res: Response) {
-        try {
-            const donations = await this.donationRepository.find({
-                relations: ['donor', 'request'],
-                order: { createdAt: 'DESC' }
-            });
-            
-            res.json({
-                data: donations
-            });
-        } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: 'Error fetching donations'
-            });
-        }
-    }
-
-    async getDonation(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            const donation = await this.donationRepository.findOne({
-                where: { id },
-                relations: ['donor', 'request']
-            });
-
-            if (!donation) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Donation not found'
-                });
-            }
-
-            res.json(donation);
-        } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: 'Error fetching donation'
-            });
-        }
-    }
-
     async getDonationStats(req: Request, res: Response) {
         try {
             const today = new Date();
@@ -97,37 +55,6 @@ export class DonationAdminController {
             res.status(500).json({
                 success: false,
                 message: 'Error fetching statistics'
-            });
-        }
-    }
-
-    async updateDonationStatus(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            const { status } = req.body;
-
-            const donation = await this.donationRepository.findOne({
-                where: { id }
-            });
-
-            if (!donation) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Donation not found'
-                });
-            }
-
-            donation.status = status;
-            await this.donationRepository.save(donation);
-
-            res.json({
-                success: true,
-                message: 'Status updated successfully'
-            });
-        } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: 'Error updating status'
             });
         }
     }

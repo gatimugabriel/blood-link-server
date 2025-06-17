@@ -30,6 +30,7 @@ router.route('/location').post(
 );
 
 //  -- User Profile Routes -- //
+router.get("/all", userController.listUsers.bind(userController))
 router.route('/').get(userController.getUser.bind(userController))
 
 router.get('/range', [requireBody, ...validateRangeBody, validate], userController.getUsersWithinRange.bind(userController))// get users within a given range(radius)
