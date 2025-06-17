@@ -1,6 +1,7 @@
 import {Router} from "express";
 import validationMiddleware from "../middleware/inputValidation/index";
 import {DonationRequestController} from "../controller/donationRequestController";
+import { authenticate } from "../middleware/auth/auth.middleware";
 
 const router = Router();
 const {
@@ -14,12 +15,13 @@ const controller = new DonationRequestController()
 router.get('/', controller.fetchDonationRequests.bind(controller));
 router.route('/:id')
     .get(controller.getDonationRequest.bind(controller))
-    .patch([requireBody, validate], controller.updateDonationRequest.bind(controller))
-    .delete(controller.deleteDonationRequest.bind(controller));
+    .patch(authenticate, [requireBody, validate], controller.updateDonationRequest.bind(controller))
+    .delete(authenticate, controller.deleteDonationRequest.bind(controller));
 
 router.get('/me', controller.getUserDonationRequests.bind(controller)) // Get user donation requests
 
 // ---- CREATE ---//
+router.use(authenticate)
 router.post('/', [
         ...validateDonationRequestInput, requireBody, validate
     ],
