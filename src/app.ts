@@ -23,14 +23,14 @@ app.use(compression())
 // --- CORS ---//
 const allowedOrigins = [
     process.env["MOBILE_CLIENT_ORIGIN"],
-    process.env["ADMIN_ORIGIN"],
+    process.env["ADMIN_PORTAL_ORIGIN"],
 ].filter(Boolean) as string[];
 
 const corsOptions = {
     origin: allowedOrigins,
     credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS,CONNECT,TRACE',
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    // methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS,CONNECT,TRACE',
+    allowedHeaders: ['Content-Type', 'Authorization', "Access-Control-Allow-Origin"],
     exposedHeaders: ['Content-Length', 'X-JSON']
 };
 app.options('*', cors(corsOptions));
