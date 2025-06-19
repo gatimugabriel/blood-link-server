@@ -92,45 +92,10 @@ export class DonationRequestService {
         return await this.donationRepository.findNearbyDonors(latitude, longitude, radiusInMeters, bloodGroup, requesterID);
     }
 
-    //--- confirm donor availability for donation ---//
-    //@desc: This commits the donor to that request to avoid receiving notifications from other requests
-    //      until they cancel the commitment OR donate and become feasible to donate again
-    //@desc: It creates a new donation but with a status of 'scheduled'
-    async confirmDonorAvailability(userID: string, requestID: string) {
-        // First check if user already has a scheduled donation
-        const existingDonation = await this.donationRepository.findOne({
-            where: {
-                donor: {id: userID},
-                status: 'scheduled'
-            }
-        });
-        if (existingDonation) {
-            throw new Error('You already have a scheduled donation. Please complete or cancel it before scheduling another.');
-        }
-
-        // Check if the request exists and is still open
-        const request = await this.donationRepository.findRequest(requestID)
-        if (!request || request.status !== 'open') {
-            throw new Error('Donation request not found or no longer open');
-        }
-        if (request.user.id === userID) {
-            throw new Error('You cannot donate to yourself');
-        }
-
-        // create a new donation
-        const donation = new Donation();
-        donation.donor = {id: userID} as User
-        donation.request = {id: requestID} as DonationRequest
-        donation.status = 'scheduled'
-        donation.donationDate = new Date()
-
-        return await this.donationRepository.createDonation(donation);
-    }
-
     //--- Get single donation request ---//
     // @param requestID 
     async getDonationRequest(requestID: string): Promise<DonationRequest | null> {
-        return await this.donationRepository.findRequest(requestID);
+        return await this.donationRepository.findRequestById(requestID);
     }
 
     //--- Get all user donation requests ---//
@@ -139,16 +104,49 @@ export class DonationRequestService {
         return await this.donationRepository.findUserDonationRequests(userID);
     }
 
-    //--- Get all open donation requests ---//
-    // @param page: number 
-    // @param limit: number
-    // @param latitude: number -> optional
-    // @param longitude: number -> optional
-    // @param radius (in meters): number -> optional
-    async getOpenDonationRequests(page: number, limit: number, latitude?: number, longitude?: number, radius?: number ): Promise<[DonationRequest[], number]> {
+    /* List requests
+    * -- Can  filter within range when a point(lat & long) and radius are provided
+     */
+    async listDonationRequests(
+        page: number,
+        limit: number,
+        latitude?: number,
+        longitude?: number,
+        radius?: number,
+        sortBy: string = 'createdAt',
+        sortOrder: 'asc' | 'desc' = 'desc',
+        status?: string,
+        dateFrom?: string,
+        dateTo?: string,
+        search?: string,
+        bloodGroup?: string,
+        urgency?: string,
+    ): Promise<[DonationRequest[], number]> {
         const offset = (page - 1) * limit;
-        return await this.donationRepository.findOpenDonationRequests(offset, limit, latitude, longitude, radius);
+
+        return await this.donationRepository.findDonationRequests(
+            offset,
+            limit,
+            latitude,
+            longitude,
+            radius,
+            sortBy,
+            sortOrder.toUpperCase() as "ASC" | "DESC",
+            status,
+            dateFrom,
+            dateTo,
+            search,
+            bloodGroup,
+            urgency,
+        );
     }
 
-
+    //--- Delete donation request ---//
+    async deleteDonationRequest(requestID: string): Promise<void> {
+        const request = await this.donationRepository.findRequestById(requestID);
+        if (!request) {
+            throw new Error("Blood request not found");
+        }
+        await this.donationRepository.deleteDonationRequest(requestID);
+    }
 }

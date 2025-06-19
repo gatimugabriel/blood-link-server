@@ -1,6 +1,6 @@
-import {ExtendedRequest} from "../../../types/custom";
-import {NextFunction, Response} from "express";
-import {validateToken} from "../../../utils/token";
+import { ExtendedRequest } from "../../../types/custom";
+import { NextFunction, Response } from "express";
+import { validateToken } from "../../../utils/token";
 
 export const authenticate = async (
     req: ExtendedRequest,
@@ -9,20 +9,17 @@ export const authenticate = async (
 ) => {
     const authHeader = req.header('Authorization') || req.headers['authorization']
     const token = req.cookies["accessToken"] || (authHeader && authHeader.split(' ')[1]);
+
     if (!token) {
-        if (req.xhr || req.headers.accept?.includes('application/json')) {
-            return res.status(401).json({
-                success: false,
-                message: `Missing access Token`,
-            });
-        } else {
-            // For views
-            return res.redirect('/admin/login');
-        }
+        res.status(401).json({
+            success: false,
+            message: `Missing access Token`,
+        });
+        return
     }
 
     const decoded = validateToken(token, 'ACCESS')
-    if (!decoded) {
+    if (!decoded?.userID) {        
         res.status(401).json({
             success: false,
             message: `Invalid access Token`,
@@ -60,10 +57,3 @@ export const validateRefreshToken = async (
     req.user = decoded;
     next();
 }
-
-
-
-
-
-
-

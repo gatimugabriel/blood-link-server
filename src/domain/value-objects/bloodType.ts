@@ -8,5 +8,3 @@ export enum BloodType{
     O_POSITIVE = "O+",
     O_NEGATIVE = "O-"
 }
-
-

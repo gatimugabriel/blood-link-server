@@ -182,6 +182,9 @@ Key Component Interactions:
   - Verify FCM token is properly registered
   - On client-side, ensure device has proper permissions
 
+## Data Seeding Guide
+Guide to populate the database with dummy data for development & testing purposes. 
+
 ## API Documentation
 Detailed API documentation can be found in [docs/api.md](docs/api.md)
 

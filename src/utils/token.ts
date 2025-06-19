@@ -15,8 +15,6 @@ export function generateToken(payload: any, secretKey: string, expiresIn: string
 export function validateToken(tokenString: string, tokenType: string): any {
     let secret: string;
 
-    console.log("tokenType", tokenType)
-
     switch (tokenType) {
         case "ACCESS":
             secret = accessTokenSecret
@@ -36,7 +34,7 @@ export function validateToken(tokenString: string, tokenType: string): any {
         const encryptedPayload = token.data as string;
         return decryptPayload(encryptedPayload);
     } catch (err) {
-        console.log(err)
+        // throw new Error(`${tokenType} Token Validation Failed`)
         return err
     }
 }
@@ -55,5 +53,3 @@ export function generateAuthTokens(userID: number | string, userRole: string, em
 
     return {accessToken, refreshToken};
 }
-
-

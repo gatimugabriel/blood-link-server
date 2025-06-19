@@ -3,8 +3,6 @@ import { UserService } from "../../application/services/userService";
 import { UserRepository } from "../../domain/repositories/userRepository";
 import { users } from "../../infrastructure/database/data/users";
 import { ExtendedRequest } from "../../types/custom";
-import { firebaseAdmin } from "../../application/config/firebase/firebase.config";
-import { token } from "morgan";
 
 export class UserController {
     private readonly userService: UserService
@@ -18,6 +16,48 @@ export class UserController {
         try {
             await this.userService.insertManyUsers(users);
             res.status(201).json({ message: "Inserted users" });
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    async listUsers(req: Request, res: Response, next: NextFunction) {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const latitude = parseFloat(req.query.lat as string);
+        const longitude = parseFloat(req.query.long as string);
+        const radius = parseFloat(req.query.radius as string) || 150000;
+        const sortBy = req.query.sortBy as string || 'createdAt';
+        const sortOrder = req.query.sortOrder as 'asc' | 'desc' || 'desc';
+        const status = req.query.status as string;
+        const search = req.query.search as string;
+        const bloodGroup = req.query.bloodGroup as string;
+
+        try {
+            const [users, total] = await this.userService.listUsers(
+                page,
+                limit,
+                latitude,
+                longitude,
+                radius,
+                sortBy,
+                sortOrder,
+                status,
+                search,
+                bloodGroup,
+            );
+
+
+            res.status(200).json({
+                data: users,
+                pagination: {
+                    dataCount: users.length,
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            });
         } catch (error) {
             next(error)
         }

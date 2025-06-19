@@ -18,18 +18,46 @@ export class UserRepository {
         return await this.repository.save(user);
     }
 
+    async updateUser(user: User): Promise<User> {
+        return await this.repository.save(user);
+    }
+
     async findUser(options: FindOneOptions<User>): Promise<User | null> {
         return this.repository.findOne(options);
     }
 
-    // async updateUser(user: User): Promise<User> {
-    //     return await this.repository.save(user);
-    // }
-    //
     // async deleteUser(userID: string): Promise<any> {
     //     return await this.repository.delete({ id: userID });
     // }
 
+    async listUsers(options: FindManyOptions<User>): Promise<[User[], number]> {
+        return await this.repository.findAndCount(options);
+    }
+
+    async listUsers2(
+        offset: number,
+        limit: number,
+        latitude?: number,
+        longitude?: number,
+        radiusInMeters?: number,
+        sortBy: string = 'createdAt',
+        sortOrder: 'ASC' | 'DESC' = 'DESC',
+        status?: string,
+        search?: string,
+        bloodGroup?: string,
+    ): Promise<[User[], number]> {
+        return await this.repository.findAndCount({
+            relations: ['donationRequests'],
+            where: {
+                status: status,
+            },
+            order: {
+                [sortBy]: sortOrder
+            },
+            skip: offset,
+            take: limit
+        });
+    }
 
     //  find users within a specified range (radius distance)
     // @param -> latitude: number
