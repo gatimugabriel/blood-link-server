@@ -162,9 +162,9 @@ export class DonationRepository {
                     patientName: row.patientName,
                     mobileNumber: row.mobileNumber,
                     stringRequestLocation: row.stringRequestLocation,
-                    createdAt: row.created_at,
-                    updatedAt: row.updated_at,
-                    deletedAt: row.deleted_at,
+                    createdAt: row.createdAt,
+                    updatedAt: row.updatedAt,
+                    deletedAt: row.deletedAt,
 
                     user: {
                         id: row.userId,
@@ -184,7 +184,6 @@ export class DonationRepository {
                 });
                 return request;
             });
-
             // [entities, total count]
             return [donationRequests, results.length ? parseInt(results[0].total_count) : 0];
         }

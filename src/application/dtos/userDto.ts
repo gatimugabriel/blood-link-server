@@ -17,11 +17,20 @@ export interface CreateUserDto {
     lastKnownLocation: any,
     // lastKnownLocation: {latitude: number, longitude: number};
     lastDonationDate?: Date;
+    profilePicture?: string;
 }
 
 export interface LoginUserDto {
     email: string;
     password: string;
+}
+
+export interface GoogleUserDto {
+    email: string;
+    googleId: string;
+    firstName: string;
+    lastName: string;
+    profilePicture?: string;
 }
 
 export interface UserTokenDto {

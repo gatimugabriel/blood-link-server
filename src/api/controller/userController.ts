@@ -101,6 +101,7 @@ export class UserController {
     async setLocation(req: ExtendedRequest, res: Response, next: NextFunction){
         try{
             console.log("User Location updated")
+            res.status(200).json({message: "User Location updated"})
         }catch (e) {
             console.error(e)
             next(e)

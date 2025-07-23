@@ -101,7 +101,6 @@ export class DonationRequestController {
         }
 
         try {
-            // const data = await this.donationRequestService.listDonationRequestsWithinRange(page, limit, latitude, longitude, radius);
             const [requests, total] = await this.donationRequestService.listDonationRequests(
                 page,
                 limit,
@@ -114,10 +113,8 @@ export class DonationRequestController {
                 dateFrom,
                 dateTo,
                 search,
-                bloodGroup,
                 urgency,
             );
-
             res.status(200).json({
                 data: requests,
                 pagination: {

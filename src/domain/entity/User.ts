@@ -40,6 +40,9 @@ export class User {
 
     @Column({nullable: true})
     googleId!: string;
+    
+    @Column({nullable: true})
+    profilePicture!: string;
 
     @Column({type: "geometry", spatialFeatureType: "Point", srid: 4326})
     primaryLocation!: string;

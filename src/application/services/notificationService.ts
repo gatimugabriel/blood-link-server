@@ -10,7 +10,7 @@ export class NotificationService {
             mailerUtil.sendDonationRequestEmail(recipient, data)
         })
 
-        // send push notifications with Firebase
+        // send push notifications
         const pushPromises = recipients.map(recipient => {
             if (recipient.tokens.length > 0) {
                 const fcmToken = recipient.tokens[0]
