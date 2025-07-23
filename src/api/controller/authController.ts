@@ -1,11 +1,12 @@
-import {NextFunction, Request, Response} from "express";
-import {UserTokenDto} from "../../application/dtos/userDto";
-import {AuthService} from "../../application/services/authService";
-import {Token} from "../../domain/entity/User";
-import {UserRepository} from "../../domain/repositories/userRepository";
-import {ExtendedRequest} from "../../types/custom";
-import {generateAuthTokens} from "../../utils/token";
+import { NextFunction, Request, Response } from "express";
+import { UserTokenDto } from "../../application/dtos/userDto";
+import { AuthService } from "../../application/services/authService";
+import { Token } from "../../domain/entity/User";
+import { UserRepository } from "../../domain/repositories/userRepository";
+import { ExtendedRequest } from "../../types/custom";
+import { generateAuthTokens } from "../../utils/token";
 import bcrypt from "bcrypt";
+import { OAuth2Client } from 'google-auth-library';
 
 export class AuthController {
     private readonly authService: AuthService;
@@ -20,7 +21,7 @@ export class AuthController {
     async signup(req: Request, res: Response, next: NextFunction) {
         try {
             const user = await this.authService.createUser(req.body);
-            const {accessToken, refreshToken} = generateAuthTokens(user.id, user.role, user.email)
+            const { accessToken, refreshToken } = generateAuthTokens(user.id, user.role, user.email)
 
             // --- save refresh token to DB ---//
             const tokenData: UserTokenDto = {
@@ -40,7 +41,7 @@ export class AuthController {
                 httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
             });
 
-            res.status(201).json({user, accessToken, refreshToken});
+            res.status(201).json({ user, accessToken, refreshToken });
         } catch (error) {
             next(error)
         }
@@ -67,7 +68,7 @@ export class AuthController {
 
     async signin(req: Request, res: Response, next: NextFunction) {
         try {
-            const {accessToken, refreshToken} = await this.authService.authenticateUser(req.body);
+            const { accessToken, refreshToken } = await this.authService.authenticateUser(req.body);
             // set http-only cookies
             res.cookie('accessToken', accessToken, {
                 httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
@@ -76,7 +77,7 @@ export class AuthController {
                 httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
             });
 
-            res.json({accessToken, refreshToken});
+            res.json({ accessToken, refreshToken });
         } catch (error) {
             next(error);
         }
@@ -86,7 +87,7 @@ export class AuthController {
         const { email, password } = req.body;
 
         try {
-            const user = await this.userRepo.findUser({where: {email}})
+            const user = await this.userRepo.findUser({ where: { email } })
             if (!user || (user.role).toUpperCase() !== 'ADMIN') {
                 res.status(401)
                 res.render('auth/login', {
@@ -106,7 +107,7 @@ export class AuthController {
                 return
             }
 
-            const {accessToken, refreshToken} = generateAuthTokens(user.id, user.role, user.email)
+            const { accessToken, refreshToken } = generateAuthTokens(user.id, user.role, user.email)
 
             // Set cookies
             res.cookie('accessToken', accessToken, {
@@ -131,9 +132,9 @@ export class AuthController {
     }
 
     async signout(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const {refreshToken} = req.body
+        const { refreshToken } = req.body
         const token = req.cookies["refreshToken"] || refreshToken
-        const {user} = req
+        const { user } = req
 
         try {
             // --- remove refresh token from DB --- //
@@ -141,14 +142,14 @@ export class AuthController {
             // clear tokens in http-only cookies
             res.clearCookie("accessToken");
             res.clearCookie("refreshToken");
-            res.status(200).json({message: "Signed out!"});
+            res.status(200).json({ message: "Signed out!" });
         } catch (error) {
             next(error);
         }
     }
 
     async refreshToken(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const {user} = req
+        const { user } = req
         const userID = user?.userID as string
         const tokenString = req.cookies['refreshToken'] || req.body.refreshToken;
 
@@ -159,13 +160,57 @@ export class AuthController {
             }
 
             // --- create a new access token  --- //
-            const {accessToken} = generateAuthTokens(userID, user?.userRole as string, user?.email)
+            const { accessToken } = generateAuthTokens(userID, user?.userRole as string, user?.email)
             res.clearCookie('accessToken')
             res.cookie('accessToken', accessToken, {
                 httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
             });
-            res.status(200).json({accessToken});
+            res.status(200).json({ accessToken });
         } catch (error) {
+            next(error);
+        }
+    }
+
+    async googleAuth(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { idToken } = req.body;
+            if (!idToken) {
+                return res.status(400).json({ error: 'ID token is required' });
+            }
+
+            // Verify Google ID token
+            const client = new OAuth2Client(process.env.GOOGLE_OAUTH_CLIENT_ID);
+            const ticket = await client.verifyIdToken({
+                idToken,
+                audience: process.env.GOOGLE_OAUTH_CLIENT_ID
+            });
+
+            const payload = ticket.getPayload();
+            if (!payload) {
+                return res.status(400).json({ error: 'Invalid token' });
+            }
+
+            const { email, name, picture, given_name, family_name, sub: googleId } = payload;
+
+            const { user, isNewUser, accessToken, refreshToken } = await this.authService.authenticateGoogleUser({
+                email: email!,
+                googleId: googleId!,
+                firstName: given_name || name?.split(' ')[0] || '',
+                lastName: family_name || name?.split(' ').slice(1).join(' ') || '',
+                profilePicture: picture
+            });
+
+            // Set cookies
+            res.cookie('accessToken', accessToken, {
+                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+            });
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+            });
+
+            res.status(200).json({ user, accessToken, refreshToken, isNewUser });
+        } catch (error) {
+            console.error('Google auth error:', error);
             next(error);
         }
     }

@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import {UserRepository} from "../../domain/repositories/userRepository";
-import {CreateUserDto, LoginUserDto, UserTokenDto} from "../dtos/userDto";
+import {CreateUserDto, GoogleUserDto, LoginUserDto, UserTokenDto} from "../dtos/userDto";
 import {Token, User} from "../../domain/entity/User";
 import {createPoint} from "../../utils/database";
 import {generateAuthTokens} from "../../utils/token";
@@ -87,5 +87,60 @@ export class AuthService {
             throw new Error(`Invalid ${tokenType} Token`);
         }
         return userToken;
+    }
+    
+    // Authenticate or create a user with Google credentials
+    async authenticateGoogleUser(userData: GoogleUserDto): Promise<{ user: User, isNewUser: boolean, accessToken: string, refreshToken: string }> {
+        let user = await this.userRepository.findUser({
+            where: [{ email: userData.email }, { googleId: userData.googleId }]
+        });
+        
+        let isNewUser = false;
+
+        if (!user) {
+            isNewUser = true;
+            const defaultLocation = { latitude: 0, longitude: 0 }; 
+            
+            const newUser = new User();
+            Object.assign(newUser, {
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                email: userData.email.toLowerCase(),
+                googleId: userData.googleId,
+                profilePicture: userData.profilePicture,
+                password: bcrypt.hashSync(Math.random().toString(36).slice(-8), 10), // Random password
+                role: "user",
+                user_source: "google",
+                isVerified: true,
+                status: "active",
+                lastDonationDate: null,
+                primaryLocation: createPoint(defaultLocation.latitude, defaultLocation.longitude),
+                lastKnownLocation: createPoint(defaultLocation.latitude, defaultLocation.longitude)
+            });
+            
+            user = await this.userRepository.saveUser(newUser);
+        } else if (!user.googleId) {
+            user.googleId = userData.googleId;
+            user.isVerified = true;
+            user.user_source = "google";
+            if (userData.profilePicture && !user.profilePicture) {
+                user.profilePicture = userData.profilePicture;
+            }
+            user = await this.userRepository.updateUser(user);
+        }
+        
+        // Generate & save tokens
+        const { accessToken, refreshToken } = generateAuthTokens(user.id, user.role, user.email);
+                const tokenData: UserTokenDto = {
+            userID: user.id,
+            token: refreshToken,
+            type: "refresh"
+        };
+        
+        const token = new Token();
+        Object.assign(token, tokenData);
+        await this.userRepository.saveToken(token);
+        
+        return { user, isNewUser, accessToken, refreshToken };
     }
 }

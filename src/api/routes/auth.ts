@@ -12,7 +12,6 @@ router.post('/send-phone-verification', [requireBody, ...validateMobileVerificat
 router.post('/send-email-verification', [requireBody, ...validateEmailVerification, validate], authController.requestMobileVerification.bind(authController));
 router.post('/verify-code', [requireBody, validate], authController.verifyMobileCode.bind(authController));
 
-
 router.post('/signup', [requireBody, ...validateSignupInputs, validate], authController.signup.bind(authController));
 router.post('/signin', requireBody, authController.signin.bind(authController));
 router.post('/signout', [
@@ -24,6 +23,9 @@ router.post('/refresh', [
     requireBody, ...validateRefreshBody, validate,
     validateRefreshToken
 ], authController.refreshToken.bind(authController));
+
+// Google OAuth
+router.post('/google', requireBody, authController.googleAuth.bind(authController));
 
 export default router;
 
