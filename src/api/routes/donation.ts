@@ -1,6 +1,7 @@
 import {Router} from "express";
 import validationMiddleware from "../middleware/inputValidation/index";
 import {DonationController} from "../controller/donationController";
+import { authenticate } from "../middleware/auth/auth.middleware";
 
 const router = Router();
 const {
@@ -10,7 +11,7 @@ const {
 const controller = new DonationController()
 
 // Authenticated routes
-// router.use(authenticate)
+router.use(authenticate)
 
 router.post('/', [requireBody, validate]); // Creates a new donation wih status 'completed'
 router.post('/donate/confirm-availability/:requestID', controller.confirmDonorAvailability.bind(controller)) // Confirm donor's availability (Creates a Donation with  status 'scheduled')

@@ -113,6 +113,7 @@ export class DonationRequestController {
                 dateFrom,
                 dateTo,
                 search,
+                bloodGroup,
                 urgency,
             );
             res.status(200).json({

@@ -21,10 +21,10 @@ export class DonationController {
     async confirmDonorAvailability(req: ExtendedRequest, res: Response, next: NextFunction) {
         const {user} = req
         const userID = user?.userID as string
-        const {id} = req.params
+        const {requestID} = req.params
 
         try {
-            const data = await this.service.confirmDonorAvailability(userID, id);
+            const data = await this.service.confirmDonorAvailability(userID, requestID);
             res.status(201).json({message: "Your availability has been confirmed successfully!", data});
         } catch (error) {
             next(error);
@@ -82,6 +82,7 @@ export class DonationController {
             const bloodGroup = req.query.bloodGroup as string;
             const donorId = req.query.donorId as string;
             const requestId = req.query.requestId as string;
+            const urgency = req.query.urgency as string
 
             if (limit > 100) {
                 return res.status(400).json({ message: "Limit cannot be greater than 100. Please reduce your limit" });
@@ -99,6 +100,7 @@ export class DonationController {
                 bloodGroup,
                 donorId,
                 requestId,
+                urgency
             );
 
             res.status(200).json({

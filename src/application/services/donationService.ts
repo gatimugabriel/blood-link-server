@@ -1,8 +1,8 @@
-import {DonationRepository} from "../../domain/repositories/donationRepository";
-import {UserRepository} from "../../domain/repositories/userRepository";
-import {Donation} from "../../domain/entity/Donation";
-import {User} from "../../domain/entity/User";
-import {DonationRequest} from "../../domain/entity/DonationRequest";
+import { DonationRepository } from "../../domain/repositories/donationRepository";
+import { UserRepository } from "../../domain/repositories/userRepository";
+import { Donation } from "../../domain/entity/Donation";
+import { User } from "../../domain/entity/User";
+import { DonationRequest } from "../../domain/entity/DonationRequest";
 
 export class DonationService {
     constructor(
@@ -19,7 +19,7 @@ export class DonationService {
         // First check if user already has a scheduled donation
         const existingDonation = await this.donationRepository.findDonation({
             where: {
-                donor: {id: userID},
+                donor: { id: userID },
                 status: 'scheduled'
             }
         });
@@ -38,8 +38,8 @@ export class DonationService {
 
         // create a new donation
         const donation = new Donation();
-        donation.donor = {id: userID} as User
-        donation.request = {id: requestID} as DonationRequest
+        donation.donor = { id: userID } as User
+        donation.request = { id: requestID } as DonationRequest
         donation.status = 'scheduled'
         donation.donationDate = new Date()
 
@@ -51,8 +51,8 @@ export class DonationService {
     async completeDonation(donationID: string): Promise<Donation> {
         // Find the donation
         const donation = await this.donationRepository.findDonation({
-            where: {id: donationID},
-            relations: {request: true, donor: true}
+            where: { id: donationID },
+            relations: { request: true, donor: true }
         });
 
         if (!donation) {
@@ -86,7 +86,7 @@ export class DonationService {
     //@desc: This cancels a scheduled donation
     async cancelDonation(donationID: string): Promise<Donation> {
         const donation = await this.donationRepository.findDonation({
-            where: {id: donationID}
+            where: { id: donationID }
         });
 
         if (!donation) {
@@ -114,6 +114,7 @@ export class DonationService {
         bloodGroup?: string,
         donorId?: string,
         requestId?: string,
+        urgency?: string
     ): Promise<[Donation[], number]> {
         const offset = (page - 1) * limit;
         return await this.donationRepository.findDonations(
@@ -128,6 +129,7 @@ export class DonationService {
             bloodGroup,
             donorId,
             requestId,
+            urgency
         );
     }
 
@@ -135,9 +137,9 @@ export class DonationService {
     async getDonation(donationID: string): Promise<Donation | null> {
         return await this.donationRepository.findDonation({
             where: { id: donationID },
-            relations: { 
-                donor: true, 
-                request: { user: true } 
+            relations: {
+                donor: true,
+                request: { user: true }
             }
         });
     }

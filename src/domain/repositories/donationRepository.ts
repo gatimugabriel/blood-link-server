@@ -1,9 +1,9 @@
-import {FindOneOptions, Repository} from "typeorm";
-import {User} from "../entity/User";
-import {DB} from "../../infrastructure/database/data-source";
-import {DonationRequest} from "../entity/DonationRequest";
-import {Donation} from "../entity/Donation";
-import {BloodType} from "../value-objects/bloodType";
+import { FindOneOptions, Repository } from "typeorm";
+import { User } from "../entity/User";
+import { DB } from "../../infrastructure/database/data-source";
+import { DonationRequest } from "../entity/DonationRequest";
+import { Donation } from "../entity/Donation";
+import { BloodType } from "../value-objects/bloodType";
 
 /*--- Contains all the database operations related to the DonationRequest & Donations entities ---*/
 export class DonationRepository {
@@ -24,8 +24,8 @@ export class DonationRepository {
     // Find request by ID
     async findRequestById(requestID: string): Promise<DonationRequest | null> {
         return await this.requestRepo.findOne({
-            where: {id: requestID},
-            relations: {user: true},
+            where: { id: requestID },
+            relations: { user: true },
             select: {
                 user: {
                     id: true,
@@ -65,25 +65,25 @@ export class DonationRepository {
                 .take(limit);
 
             if (status) {
-                queryBuilder.andWhere('donationRequest.status = :status', {status});
+                queryBuilder.andWhere('donationRequest.status = :status', { status });
             }
             if (dateFrom) {
-                queryBuilder.andWhere('donationRequest.createdAt >= :dateFrom', {dateFrom});
+                queryBuilder.andWhere('donationRequest.createdAt >= :dateFrom', { dateFrom });
             }
             if (dateTo) {
-                queryBuilder.andWhere('donationRequest.createdAt <= :dateTo', {dateTo});
+                queryBuilder.andWhere('donationRequest.createdAt <= :dateTo', { dateTo });
             }
             if (search) {
                 queryBuilder.andWhere(
                     '(donationRequest.patientName ILIKE :search OR donationRequest.healthFacility ILIKE :search OR CAST(donationRequest.bloodGroup AS TEXT) ILIKE :search)',
-                    {search: `%${search}%`}
+                    { search: `%${search}%` }
                 );
             }
             if (bloodGroup) {
-                queryBuilder.andWhere('donationRequest.bloodGroup = :bloodGroup', {bloodGroup});
+                queryBuilder.andWhere('donationRequest.bloodGroup = :bloodGroup', { bloodGroup });
             }
             if (urgency) {
-                queryBuilder.andWhere('donationRequest.urgency = :urgency', {urgency});
+                queryBuilder.andWhere('donationRequest.urgency = :urgency', { urgency });
             }
 
             return await queryBuilder.getManyAndCount();
@@ -196,7 +196,7 @@ export class DonationRepository {
 
     // Delete a donation request
     async deleteDonationRequest(requestID: string): Promise<any> {
-        return await this.requestRepo.delete({id: requestID});
+        return await this.requestRepo.delete({ id: requestID });
     }
 
     // Find nearby possible donors
@@ -322,7 +322,7 @@ export class DonationRepository {
 
     // get all user requests
     async findUserDonationRequests(userID: string): Promise<[DonationRequest[], number]> {
-        return await this.requestRepo.findAndCount({where: {user: {id: userID}}});
+        return await this.requestRepo.findAndCount({ where: { user: { id: userID } } });
     }
 
     // Find any open donation request by user
@@ -368,7 +368,11 @@ export class DonationRepository {
         bloodGroup?: string,
         donorId?: string,
         requestId?: string,
+        urgency?: string
     ): Promise<[Donation[], number]> {
+        console.log(urgency, bloodGroup);
+
+
         const queryBuilder = this.donationRepo.createQueryBuilder('donation')
             .select(['donation', 'donor.id', 'donor.firstName', 'donor.lastName', 'donor.email', 'donor.phone', 'donor.bloodGroup'])
             .leftJoin('donation.donor', 'donor')
@@ -380,40 +384,38 @@ export class DonationRepository {
             .skip(offset)
             .take(limit);
 
-        // Add status filter if provided
         if (status) {
-            queryBuilder.andWhere('donation.status = :status', {status});
+            queryBuilder.andWhere('donation.status = :status', { status });
         }
 
-        // Add date range filters if provided
         if (dateFrom) {
-            queryBuilder.andWhere('donation.createdAt >= :dateFrom', {dateFrom});
+            queryBuilder.andWhere('donation.createdAt >= :dateFrom', { dateFrom });
         }
         if (dateTo) {
-            queryBuilder.andWhere('donation.createdAt <= :dateTo', {dateTo});
+            queryBuilder.andWhere('donation.createdAt <= :dateTo', { dateTo });
         }
 
-        // Add search filter if provided
         if (search) {
             queryBuilder.andWhere(
                 '(donor.firstName ILIKE :search OR donor.lastName ILIKE :search OR donor.email ILIKE :search OR request.patientName ILIKE :search OR request.healthFacility ILIKE :search)',
-                {search: `%${search}%`}
+                { search: `%${search}%` }
             );
         }
 
-        // Add blood group filter if provided
         if (bloodGroup) {
-            queryBuilder.andWhere('request.bloodGroup = :bloodGroup', {bloodGroup});
+            queryBuilder.andWhere('request.bloodGroup = :bloodGroup', { bloodGroup });
         }
 
-        // Add donor ID filter if provided
         if (donorId) {
-            queryBuilder.andWhere('donor.id = :donorId', {donorId});
+            queryBuilder.andWhere('donor.id = :donorId', { donorId });
         }
 
-        // Add request ID filter if provided
         if (requestId) {
-            queryBuilder.andWhere('request.id = :requestId', {requestId});
+            queryBuilder.andWhere('request.id = :requestId', { requestId });
+        }
+
+        if (urgency) {
+            queryBuilder.andWhere('request.urgency = :urgency', { urgency });
         }
 
         return await queryBuilder.getManyAndCount();
