@@ -1,4 +1,4 @@
-import {User} from "../../domain/entity/User";
+import { User } from "../../domain/entity/User";
 import mailerUtil from "../../utils/mailer";
 
 // --- Notification Service --- //
@@ -7,7 +7,8 @@ export class NotificationService {
     async sendNotification(recipients: User[], data: any): Promise<void> {
         // send email notifications
         const emailPromises = recipients.map(recipient => {
-            mailerUtil.sendDonationRequestEmail(recipient, data)
+            // mailerUtil.sendDonationRequestEmail(recipient, data)
+            console.log("");
         })
 
         // send push notifications
@@ -19,6 +20,16 @@ export class NotificationService {
             return Promise.resolve();
         });
 
+        if (Array.isArray(recipients)) {
+            for (const recipient of recipients) {
+                if (recipient.tokens && recipient.tokens.length > 0) {
+                    for (const token of recipient.tokens) {
+                        pushPromises.push(this.sendExpoPushNotification(token, data));
+                    }
+                }
+            }
+        }
+
         await Promise.all([...emailPromises, ...pushPromises]);
         console.log("All emails & push-notifications sent!")
         // TODO: Implement SMS notifications
@@ -26,6 +37,20 @@ export class NotificationService {
 
     async sendExpoPushNotification(fcmToken: any, data: any) {
         try {
+            let messageTitle = data.title || 'Blood Link Notification';
+            let messageBody = typeof data === 'string' ? data : data.subTitle || 'New notification';
+            let messageData = typeof data === 'string'
+                ? {
+                    message: data,
+                    type: "NOTIFICATION",
+                    id: Date.now().toString()
+                }
+                : {
+                    type: "DONATION_REQUEST",
+                    id: data.id || Date.now().toString(),
+                    ...(data.body || {})
+                };
+
             const response = await fetch('https://exp.host/--/api/v2/push/send', {
                 method: 'POST',
                 headers: {
@@ -35,17 +60,16 @@ export class NotificationService {
                 },
                 body: JSON.stringify({
                     to: fcmToken,
-                    title: data.title,
-                    body: data.subTitle,
-                    data: {
-                        type: "DONATION_REQUEST",
-                        ...data.body
-                    },
+                    title: messageTitle,
+                    body: messageBody,
+                    sound: 'default',
+                    badge: 1,
+                    data: messageData,
                 }),
             });
 
-            const responseData = await response.json();
-            console.log('Successfully sent expo push notification:', responseData);
+            // const responseData = await response.json();
+            // console.log('Successfully sent expo push notification:', responseData);
             return response;
         } catch (error) {
             console.error('Error sending expo push notification:', error);

@@ -20,6 +20,16 @@ export class NotificationController {
         }
     }
 
+    async getNotification(req: any, res: Response, next: NextFunction) {
+        try {
+            const { id } = req.params;
+            const notifications = await this.notificationRepository.findOne({ where: { id: id } });
+            res.status(200).json({ notifications });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async markAsRead(req: any, res: Response, next: NextFunction) {
         try {
             const userID = req.user?.userID;
@@ -48,13 +58,13 @@ export class NotificationController {
 
     async deleteNotification(req: Request, res: Response, next: NextFunction) {
         try {
-            const {id} = req.params;
-            const notification = await this.notificationRepository.findOneBy({id});
+            const { id } = req.params;
+            const notification = await this.notificationRepository.findOneBy({ id });
             if (!notification) {
-                return res.status(404).json({message: "Notification not found"});
+                return res.status(404).json({ message: "Notification not found" });
             }
             await this.notificationRepository.remove(notification);
-            res.status(200).json({message: "Notification deleted"});
+            res.status(200).json({ message: "Notification deleted" });
         } catch (error) {
             next(error);
         }

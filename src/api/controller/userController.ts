@@ -91,6 +91,9 @@ export class UserController {
             const { user } = req
             const { fcmToken } = req.body
             const userId = user?.userID as string
+
+            console.log(fcmToken, userId);
+
             const data = await this.userService.saveUserToken(userId, fcmToken, "fcm");
             res.status(201).json({ message: "FCM token saved", data });
         } catch (error) {
