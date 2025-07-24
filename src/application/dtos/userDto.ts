@@ -7,6 +7,7 @@ export interface CreateUserDto {
     phone: string;
     password: string;
     bloodGroup: string;
+    age?: number;
     role?: string;
     user_source?: string;
     isVerified?: boolean;

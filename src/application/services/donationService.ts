@@ -3,12 +3,16 @@ import { UserRepository } from "../../domain/repositories/userRepository";
 import { Donation } from "../../domain/entity/Donation";
 import { User } from "../../domain/entity/User";
 import { DonationRequest } from "../../domain/entity/DonationRequest";
+import { NotificationService } from "./notificationService";
 
 export class DonationService {
+    private notificationService: NotificationService;
+
     constructor(
         private donationRepository: DonationRepository,
         private userRepo: UserRepository
     ) {
+        this.notificationService = new NotificationService();
     }
 
     //--- confirm donor availability for donation ---//
@@ -27,7 +31,6 @@ export class DonationService {
             throw new Error('You already have a scheduled donation. Please complete or cancel it before scheduling another.');
         }
 
-        // Check if the request exists and is still open
         const request = await this.donationRepository.findRequestById(requestID)
         if (!request || request.status !== 'open') {
             throw new Error('Donation request not found or no longer open');
@@ -36,14 +39,46 @@ export class DonationService {
             throw new Error('You cannot donate to yourself');
         }
 
-        // create a new donation
+        // Get donor details 
+        const donor = await this.userRepo.findUser({ where: { id: userID } });
+        if (!donor) {
+            throw new Error('Donor not found');
+        }
+
         const donation = new Donation();
         donation.donor = { id: userID } as User
         donation.request = { id: requestID } as DonationRequest
         donation.status = 'scheduled'
         donation.donationDate = new Date()
 
-        return await this.donationRepository.createDonation(donation);
+        const createdDonation = await this.donationRepository.createDonation(donation);
+
+        // Notify the requester about the incoming donor
+        try {
+            const requester = request.user;
+            if (requester.tokens && requester.tokens.length > 0) {
+                await this.notificationService.sendNotification(
+                    [{ tokens: requester.tokens} as User],
+                    {
+                        title: "Donor Found!",
+                        subTitle: `${donor.firstName} ${donor.lastName} has confirmed availability to donate ${request.bloodGroup} blood`,
+                        id: `donor-confirmation-${createdDonation.id}`,
+                        body: {
+                            type: "DONOR_CONFIRMATION",
+                            donationId: createdDonation.id,
+                            donorName: `${donor.firstName} ${donor.lastName}`,
+                            bloodGroup: request.bloodGroup,
+                            requestId: requestID,
+                            urgency: request.urgency
+                        }
+                    }
+                );
+            }
+        } catch (notificationError) {
+            console.error('Failed to send notification to requester:', notificationError);
+        }
+
+        return createdDonation;
     }
 
     //--- Complete donation ---//
@@ -63,13 +98,10 @@ export class DonationService {
             throw new Error('Only scheduled donations can be completed');
         }
 
-        // Update donation status to completed
         donation.status = 'completed';
         donation.donationDate = new Date();
-
         const updatedDonation = await this.donationRepository.createDonation(donation);
 
-        // Update the request status to fulfilled
         const request = donation.request;
         request.status = 'fulfilled';
         await this.donationRepository.updateDonationRequest(request);

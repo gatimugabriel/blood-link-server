@@ -9,10 +9,10 @@ const {requireBody, validateMobileVerification, validateEmailVerification, valid
 
 // Phone & Email Verification
 router.post('/send-phone-verification', [requireBody, ...validateMobileVerification, validate], authController.requestMobileVerification.bind(authController));
-router.post('/send-email-verification', [requireBody, ...validateEmailVerification, validate], authController.requestMobileVerification.bind(authController));
+router.post('/send-email-verification', [requireBody, ...validateEmailVerification, validate], authController.requestEmailVerification.bind(authController));
 router.post('/verify-code', [requireBody, validate], authController.verifyMobileCode.bind(authController));
 
-router.post('/signup', [requireBody, ...validateSignupInputs, validate], authController.signup.bind(authController));
+router.post('/signup', authController.signup.bind(authController));
 router.post('/signin', requireBody, authController.signin.bind(authController));
 router.post('/signout', [
     requireBody, ...validateRefreshBody, validate,

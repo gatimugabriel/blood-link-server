@@ -13,8 +13,9 @@ export const validateSignupInputs = [
     check("lastName", "Last Name is Required").isLength({ min: 3 }).withMessage("Name should be at least 3 characters"),
     check("email", "Please include a valid email").isEmail(),
     // check("phone", "Phone is Required").isMobilePhone("en-KE").withMessage("Invalid phone number"),
+    check("age", "Age is Required"),
     check("bloodGroup", "Your Blood Group is Required").isLength({ max: 2, min:1 }).withMessage("Invalid blood group"),
-    check("primaryLocation", "Your Primary Location is Required").isObject().withMessage("Invalid primary requestLocation"),
+    // check("primaryLocation", "Your Primary Location is Required").isObject().withMessage("Invalid primary requestLocation"),
     check("confirmPassword", "Confirm password is required")
         .not().isEmpty()
         .isLength({ min: 6 })

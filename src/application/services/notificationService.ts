@@ -6,20 +6,13 @@ import mailerUtil from "../../utils/mailer";
 export class NotificationService {
     async sendNotification(recipients: User[], data: any): Promise<void> {
         // send email notifications
-        const emailPromises = recipients.map(recipient => {
-            // mailerUtil.sendDonationRequestEmail(recipient, data)
-            console.log("");
-        })
+        const emailPromises: any = []
+        for (const recipient of recipients) {
+            emailPromises.push(mailerUtil.sendDonationRequestEmail(recipient, data))
+        }
 
         // send push notifications
-        const pushPromises = recipients.map(recipient => {
-            if (recipient.tokens.length > 0) {
-                const fcmToken = recipient.tokens[0]
-                return this.sendExpoPushNotification(fcmToken, data);
-            }
-            return Promise.resolve();
-        });
-
+        const pushPromises = [];
         if (Array.isArray(recipients)) {
             for (const recipient of recipients) {
                 if (recipient.tokens && recipient.tokens.length > 0) {
@@ -32,7 +25,6 @@ export class NotificationService {
 
         await Promise.all([...emailPromises, ...pushPromises]);
         console.log("All emails & push-notifications sent!")
-        // TODO: Implement SMS notifications
     }
 
     async sendExpoPushNotification(fcmToken: any, data: any) {
@@ -46,8 +38,9 @@ export class NotificationService {
                     id: Date.now().toString()
                 }
                 : {
-                    type: "DONATION_REQUEST",
+                    type: data.body?.type || "DONATION_REQUEST",
                     id: data.id || Date.now().toString(),
+                    requestId: data.body?.requestId || data.id,
                     ...(data.body || {})
                 };
 

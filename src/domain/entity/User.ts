@@ -20,6 +20,9 @@ export class User {
     @Column({unique: true, nullable: false})
     phone!: string;
 
+    @Column({nullable: true})
+    age!: string;
+
     @Column()
     password!: string;
 

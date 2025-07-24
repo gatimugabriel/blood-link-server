@@ -4,7 +4,7 @@ import { NextFunction, Response } from 'express';
 import crypto from 'crypto';
 import { mailConfig } from "../application/config/mail.config";
 import { ExtendedRequest } from "../types/custom";
-import { User } from "../domain/entity/User";
+import { Token, User} from "../domain/entity/User";
 
 dotenv.config();
 
@@ -43,8 +43,11 @@ const sendVerificationEmail = async ({ userName, email, token }: { userName: str
             <h1 style="color: #e63946; text-align: center;">Please Confirm Your Account</h1>
             <h2 style="color: #333;">Hello ${userName},</h2>
             <p style="font-size: 16px; color: #333;">
-                Thank you for joining Blood-Link! Please confirm your email by clicking the link below:
+                Thank you for joining Blood-Link! Please confirm your email by providing the code below/clicking the link below:
             </p>
+            
+            <strong style="color: #e63946; font-size: 20px"><b>{token}</b></strong>
+            
             <div style="text-align: center; margin: 20px 0;">
                 <a href="${process.env["MOBILE_CLIENT_ORIGIN"]}/auth/verify/${token}" 
                    style="background-color: #e63946; color: white; padding: 12px 20px; text-decoration: none; font-size: 16px; border-radius: 5px;">
@@ -160,6 +163,7 @@ const sendDonationRequestEmail = async (recipient: User, messageData: any) => {
 };
 
 const mailerUtil = {
+    sendMail,
     sendVerificationEmail,
     sendResetPassword,
     resendEmailToUnverifiedUser,

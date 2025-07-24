@@ -49,8 +49,17 @@ export class AuthController {
 
     async requestMobileVerification(req: Request, res: Response, next: NextFunction) {
         try {
-            // const user = await this.authService.requestMobileVerification(req.body);
-            res.status(201).send("12345");
+            const verificationCode = await this.authService.requestMobileVerification(req.body);
+            res.status(201).json({ message: "Verification code sent", code: verificationCode });
+        } catch (error) {
+            next(error)
+        }
+    }
+
+     async requestEmailVerification(req: Request, res: Response, next: NextFunction) {
+        try {
+            const verificationCode = await this.authService.requestEmailVerification(req.body);
+            res.status(201).json({ message: "Verification code sent", code: verificationCode });
         } catch (error) {
             next(error)
         }
@@ -59,8 +68,12 @@ export class AuthController {
 
     async verifyMobileCode(req: Request, res: Response, next: NextFunction) {
         try {
-            // const user = await this.authService.verifyMobileCode(req.body);
-            res.status(200).send("Verified");
+            const isVerified = await this.authService.verifyCode(req.body);
+            if (isVerified) {
+                res.status(200).json({ message: "Verification successful" });
+            } else {
+                res.status(400).json({ message: "Verification failed" });
+            }
         } catch (error) {
             next(error)
         }
