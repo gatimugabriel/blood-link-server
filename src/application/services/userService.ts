@@ -1,12 +1,15 @@
-import { UserRepository } from "../../domain/repositories/userRepository";
-import { createPoint } from "../../utils/database";
+import {UserRepository} from "../../domain/repositories/userRepository";
+import {createPoint} from "../../utils/database";
 import bcrypt from "bcrypt";
-import { UserTokenDto } from "../dtos/userDto";
-import { Token } from "../../domain/entity/User";
-import { User } from "../../domain/entity/User";
+import {UserTokenDto} from "../dtos/userDto";
+import {Token, User} from "../../domain/entity/User";
+import {DonationRepository} from "../../domain/repositories/donationRepository";
 
 export class UserService {
+    private readonly donationRepository: DonationRepository;
+
     constructor(private readonly userRepository: UserRepository) {
+        this.donationRepository = new DonationRepository();
     }
 
     async createUser(userData: any): Promise<User> {
@@ -37,7 +40,7 @@ export class UserService {
         return this.userRepository.saveUser(newUser);
     }
 
-    async listUsers (
+    async listUsers(
         page: number,
         limit: number,
         latitude?: number,
@@ -48,7 +51,7 @@ export class UserService {
         status?: string,
         search?: string,
         bloodGroup?: string,
-    ):Promise<[User[], number]> {
+    ): Promise<[User[], number]> {
         const offset = (page - 1) * limit;
         return await this.userRepository.listUsers2(
             offset,
@@ -85,8 +88,8 @@ export class UserService {
     async getUser(userID = '', userEmail = '') {
         if (userID === '') {
             return await this.userRepository.findUser({
-                where: { email: userEmail },
-                relations: { tokens: true },
+                where: {email: userEmail},
+                relations: {tokens: true},
                 select: {
                     tokens: {
                         token: true,
@@ -96,7 +99,7 @@ export class UserService {
             })
         }
         return await this.userRepository.findUser({
-            where: { id: userID },
+            where: {id: userID},
         })
     }
 
@@ -108,7 +111,7 @@ export class UserService {
         }
 
         const existingToken = await this.userRepository.findUserToken({
-            where: { userID, type: tokenType, token: tokenString },
+            where: {userID, type: tokenType, token: tokenString},
             select: {
                 token: true,
                 type: true,
@@ -128,7 +131,7 @@ export class UserService {
         if (userID === '') {
             // find tokens without user id
             return await this.userRepository.findManyUserTokens({
-                where: { type: tokenType },
+                where: {type: tokenType},
                 select: {
                     token: true,
                     type: true,
@@ -137,11 +140,64 @@ export class UserService {
         }
 
         return await this.userRepository.findManyUserTokens({
-            where: { userID, type: tokenType },
+            where: {userID, type: tokenType},
             select: {
                 token: true,
                 type: true,
             }
         })
+    }
+
+    /**
+     * Get user statistics including donation and request history
+     * @param userID - The ID of the user
+     * @returns User statistics
+     */
+    async getUserStats(userID: string) {
+        // Get user donations
+        const [donations, totalDonations] = await this.donationRepository.findDonations(
+            0,
+            1000,
+            'donationDate',
+            'DESC',
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            userID, // donorId
+            undefined,
+            undefined
+        );
+
+        // user requests
+        const [requests, totalRequests] = await this.donationRepository.findUserDonationRequests(userID);
+
+        //  last donation date and next eligible date
+        const completedDonations = donations.filter(d => d.status === 'completed');
+        const lastDonation = completedDonations.length > 0 ? completedDonations[0].donationDate : null;
+        const nextEligibleDate = lastDonation
+            ? new Date(new Date(lastDonation).getTime() + (56 * 24 * 60 * 60 * 1000))
+            : null;
+
+        return {
+            totalDonations: totalDonations,
+            lastDonation: lastDonation,
+            totalRequests: totalRequests,
+            nextEligibleDate: nextEligibleDate,
+            donationHistory: donations.map(d => ({
+                id: d.id,
+                donationDate: d.donationDate,
+                bloodGroup: d.request?.bloodGroup || '',
+                status: d.status,
+            })),
+            requestHistory: requests.map(r => ({
+                id: r.id,
+                createdAt: r.createdAt,
+                bloodGroup: r.bloodGroup,
+                status: r.status,
+                urgency: r.urgency,
+            })),
+        };
     }
 }

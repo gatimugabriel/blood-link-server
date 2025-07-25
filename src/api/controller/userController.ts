@@ -110,4 +110,20 @@ export class UserController {
             next(e)
         }
     }
+
+    /**
+     * Get user statistics including donation and request history
+     */
+    async getUserStats(req: ExtendedRequest, res: Response, next: NextFunction) {
+        try {
+            const { user } = req;
+            const userID = user?.userID as string;
+
+            const stats = await this.userService.getUserStats(userID);
+            res.status(200).json(stats);
+        } catch (error) {
+            console.error('Error getting user stats:', error);
+            next(error);
+        }
+    }
 }

@@ -193,6 +193,8 @@ export class AuthService {
             where: [{ email: userData.email }, { googleId: userData.googleId }]
         });
 
+        console.log("existing user", user)
+
         let isNewUser = false;
 
         if (!user) {

@@ -35,4 +35,7 @@ router.route('/').get(userController.getUser.bind(userController))
 
 router.get('/range', [requireBody, ...validateRangeBody, validate], userController.getUsersWithinRange.bind(userController))// get users within a given range(radius)
 
+// Get user statistics
+router.get('/stats', userController.getUserStats.bind(userController))
+
 export default router;
