@@ -49,7 +49,7 @@
     "start:worker:all": "concurrently \"-node-dev src/infrastructure/bull/workers/donationRequest.worker.ts\" \"ts-node-dev src/infrastructure/bull/workers/email.worker.ts\"",
     "start:worker:donation": "ts-node-dev src/infrastructure/bull/workers/donationRequest.worker.ts",
     "start:worker:email": "ts-node-dev src/infrastructure/bull/workers/email.worker.ts",
-    "build": "tsc && node src/scripts/copyViews.js",
+    "build": "tsc",
     "watch": "tsc -w",
     "typeorm": "typeorm-ts-node-commonjs",
     "migration": "npm run typeorm migration:run -- -d ./src/infrastructure/database/data-source.ts",

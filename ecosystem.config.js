@@ -22,7 +22,7 @@ module.exports = {
     },
     {
       name: "blood-link-donation-request-worker",
-      script: "build/bull/workers/donationRequest.worker.js",
+      script: "build/infrastructure/bull/workers/donationRequest.worker.js",
       exec_mode: 'fork',
       instances: 1,
       autorestart: true,
@@ -38,7 +38,7 @@ module.exports = {
     },
     {
       name: "blood-link-email-worker",
-      script: "build/bull/workers/email.worker.js",
+      script: "build/infrastructure/bull/workers/email.worker.js",
       exec_mode: 'fork',
       instances: 1,
       autorestart: true,

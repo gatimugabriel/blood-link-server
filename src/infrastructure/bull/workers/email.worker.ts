@@ -17,11 +17,10 @@ async function processNotifications(job: Job) {
 
     } catch (error) {
         console.error(`Error sending notifcation ${notificationRequest.id}:`, error);
-        throw error; // Rethrow to let BullMQ handle retries
+        throw error; 
     }
 }
 
-// Create worker to process notifications
 export const emailWorker = new Worker('mailQueue', processNotifications, { connection: redisConfig });
 
 emailWorker.on('completed', job => console.log(`Donation-Request Job ${job.id} completed`));

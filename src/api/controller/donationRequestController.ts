@@ -1,8 +1,8 @@
-import {NextFunction, Response} from "express";
-import {DonationRequestService} from "../../application/services/donationRequestService";
-import {DonationRepository} from "../../domain/repositories/donationRepository";
-import {ExtendedRequest} from "../../types/custom";
-import {UserRepository} from "../../domain/repositories/userRepository";
+import { NextFunction, Response } from "express";
+import { DonationRequestService } from "../../application/services/donationRequestService";
+import { DonationRepository } from "../../domain/repositories/donationRepository";
+import { ExtendedRequest } from "../../types/custom";
+import { UserRepository } from "../../domain/repositories/userRepository";
 
 export class DonationRequestController {
     private readonly donationRequestService: DonationRequestService;
@@ -15,11 +15,11 @@ export class DonationRequestController {
 
     //--- create a new donation request ---//
     async createDonationRequest(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const {user} = req
+        const { user } = req
         const userID = user?.userID as string
 
         try {
-            const requestData = {...req.body, userId: userID}
+            const requestData = { ...req.body, userId: userID }
             const data = await this.donationRequestService.createNewDonationRequest(requestData);
             res.status(201).json(data);
         } catch (error) {
@@ -28,7 +28,7 @@ export class DonationRequestController {
     }
 
     async updateDonationRequest(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const {requestID} = req.params
+        const { requestID } = req.params
         try {
             // const data = await this.donationRequestService.updateDonationRequest(requestID);
             res.status(200).json("to do!");
@@ -38,17 +38,17 @@ export class DonationRequestController {
     }
 
     async deleteDonationRequest(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const {requestID} = req.params
+        const { requestID } = req.params
         try {
             await this.donationRequestService.deleteDonationRequest(requestID);
-            res.status(200).json({message: "Blood request deleted successfully"});
+            res.status(200).json({ message: "Blood request deleted successfully" });
         } catch (error) {
             next(error);
         }
     }
 
     async getDonationRequest(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const {id} = req.params
+        const { id } = req.params
 
         try {
             const data = await this.donationRequestService.getDonationRequest(id);
@@ -59,7 +59,7 @@ export class DonationRequestController {
     }
 
     async getUserDonationRequests(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const {user} = req
+        const { user } = req
         const userID = user?.userID as string
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
@@ -97,7 +97,7 @@ export class DonationRequestController {
         const urgency = req.query.urgency as string;
 
         if (limit > 100) {
-            return res.status(400).json({message: "Limit cannot be greater than 100. Please reduce your limit"});
+            return res.status(400).json({ message: "Limit cannot be greater than 100. Please reduce your limit" });
         }
 
         try {

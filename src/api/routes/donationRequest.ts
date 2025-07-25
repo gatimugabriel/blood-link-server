@@ -18,8 +18,6 @@ router.route('/:id')
     .patch(authenticate, [requireBody, validate], controller.updateDonationRequest.bind(controller))
     .delete(authenticate, controller.deleteDonationRequest.bind(controller));
 
-router.get('/me', controller.getUserDonationRequests.bind(controller)) // Get user donation requests
-
 // ---- CREATE ---//
 router.use(authenticate)
 router.post('/', [
@@ -31,5 +29,7 @@ router.post('/other-person', [
         ...validateDonationRequestInputForSomeoneElse, requireBody, validate
     ],
     controller.createDonationRequest.bind(controller)); // Create a new blood donation request for someone else (OTHER)
+
+router.get('/user/me',controller.getUserDonationRequests.bind(controller)) // Get user donation requests
 
 export default router;
