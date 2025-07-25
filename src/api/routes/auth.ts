@@ -26,6 +26,7 @@ router.post('/refresh', [
 
 // Google OAuth
 router.post('/google', requireBody, authController.googleAuth.bind(authController));
+router.post('/google/complete-profile', requireBody, authController.completeGoogleProfile.bind(authController));
 
 export default router;
 

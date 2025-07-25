@@ -1,9 +1,9 @@
-import {UserRepository} from "../../domain/repositories/userRepository";
-import {createPoint} from "../../utils/database";
+import { UserRepository } from "../../domain/repositories/userRepository";
+import { createPoint } from "../../utils/database";
 import bcrypt from "bcrypt";
-import {UserTokenDto} from "../dtos/userDto";
-import {Token, User} from "../../domain/entity/User";
-import {DonationRepository} from "../../domain/repositories/donationRepository";
+import { UserTokenDto } from "../dtos/userDto";
+import { Token, User } from "../../domain/entity/User";
+import { DonationRepository } from "../../domain/repositories/donationRepository";
 
 export class UserService {
     private readonly donationRepository: DonationRepository;
@@ -22,7 +22,7 @@ export class UserService {
             lastDonationDate: null,
         };
 
-        const dataToSave = {...defaultValues, ...userData};
+        const dataToSave = { ...defaultValues, ...userData };
 
         if (!userData.primaryLocation) {
             dataToSave.primaryLocation = createPoint(dataToSave.lastKnownLocation.latitude, dataToSave.lastKnownLocation.longitude)
@@ -88,8 +88,8 @@ export class UserService {
     async getUser(userID = '', userEmail = '') {
         if (userID === '') {
             return await this.userRepository.findUser({
-                where: {email: userEmail},
-                relations: {tokens: true},
+                where: { email: userEmail },
+                relations: { tokens: true },
                 select: {
                     tokens: {
                         token: true,
@@ -99,7 +99,7 @@ export class UserService {
             })
         }
         return await this.userRepository.findUser({
-            where: {id: userID},
+            where: { id: userID },
         })
     }
 
@@ -111,7 +111,7 @@ export class UserService {
         }
 
         const existingToken = await this.userRepository.findUserToken({
-            where: {userID, type: tokenType, token: tokenString},
+            where: { userID, type: tokenType, token: tokenString },
             select: {
                 token: true,
                 type: true,
@@ -131,7 +131,7 @@ export class UserService {
         if (userID === '') {
             // find tokens without user id
             return await this.userRepository.findManyUserTokens({
-                where: {type: tokenType},
+                where: { type: tokenType },
                 select: {
                     token: true,
                     type: true,
@@ -140,7 +140,7 @@ export class UserService {
         }
 
         return await this.userRepository.findManyUserTokens({
-            where: {userID, type: tokenType},
+            where: { userID, type: tokenType },
             select: {
                 token: true,
                 type: true,
@@ -199,5 +199,15 @@ export class UserService {
                 urgency: r.urgency,
             })),
         };
+    }
+
+    async updateUserLocation(userID: string, latitude: number, longitude: number): Promise<void> {
+        const user = await this.userRepository.findUser({ where: { id: userID } });
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        user.lastKnownLocation = createPoint(latitude, longitude) as any;
+        await this.userRepository.updateUser(user);
     }
 }

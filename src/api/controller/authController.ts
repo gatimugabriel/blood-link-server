@@ -205,13 +205,41 @@ export class AuthController {
 
             const { email, name, picture, given_name, family_name, sub: googleId } = payload;
 
-            const { user, isNewUser, accessToken, refreshToken } = await this.authService.authenticateGoogleUser({
+            const result = await this.authService.authenticateGoogleUser({
                 email: email!,
                 googleId: googleId!,
                 firstName: given_name || name?.split(' ')[0] || '',
                 lastName: family_name || name?.split(' ').slice(1).join(' ') || '',
                 profilePicture: picture
             });
+
+            if (result.requiresCompletion) {
+                return res.status(200).json(result);
+            }
+
+            // Set cookies for complete profiles
+            res.cookie('accessToken', result.accessToken, {
+                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+            });
+            res.cookie('refreshToken', result.refreshToken, {
+                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+            });
+
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Google auth error:', error);
+            next(error);
+        }
+    }
+
+    async completeGoogleProfile(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { tempUserData, additionalData } = req.body;
+            
+            const { user, accessToken, refreshToken } = await this.authService.completeGoogleUserProfile(
+                tempUserData,
+                additionalData
+            );
 
             // Set cookies
             res.cookie('accessToken', accessToken, {
@@ -221,9 +249,8 @@ export class AuthController {
                 httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
             });
 
-            res.status(200).json({ user, accessToken, refreshToken, isNewUser });
+            res.status(201).json({ user, accessToken, refreshToken });
         } catch (error) {
-            console.error('Google auth error:', error);
             next(error);
         }
     }

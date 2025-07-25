@@ -45,7 +45,7 @@ export class DonationRequestService {
                 item && item.requestFor === "self"
             );
             if (hasOpenSelfRequest) {
-                throw new Error("You already have an open donation request for yourself. Please hang tight as we reach more donors / request for another user");
+                throw new Error("You already have an open donation request for yourself. Please hang tight as we reach more donors.");
             }
 
             const user = await this.userRepo.findUser({where: {id: data.userId}});

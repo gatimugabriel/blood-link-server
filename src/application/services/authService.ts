@@ -1,9 +1,9 @@
 import bcrypt from "bcrypt";
-import {UserRepository} from "../../domain/repositories/userRepository";
-import {CreateUserDto, GoogleUserDto, LoginUserDto, UserTokenDto} from "../dtos/userDto";
-import {Token, User} from "../../domain/entity/User";
-import {createPoint} from "../../utils/database";
-import {generateAuthTokens} from "../../utils/token";
+import { UserRepository } from "../../domain/repositories/userRepository";
+import { CreateUserDto, GoogleUserDto, LoginUserDto, UserTokenDto } from "../dtos/userDto";
+import { Token, User } from "../../domain/entity/User";
+import { createPoint } from "../../utils/database";
+import { generateAuthTokens } from "../../utils/token";
 import mailerUtil from "../../utils/mailer";
 import { NotificationService } from "./notificationService";
 
@@ -24,7 +24,7 @@ export class AuthService {
             lastDonationDate: null,
         };
 
-        const dataToSave = {...defaultValues, ...userData};
+        const dataToSave = { ...defaultValues, ...userData };
 
         if (!userData.primaryLocation) {
             dataToSave.primaryLocation = createPoint(dataToSave.lastKnownLocation.latitude, dataToSave.lastKnownLocation.longitude)
@@ -47,7 +47,7 @@ export class AuthService {
     //  Generates JWT tokens
     async authenticateUser(loginData: LoginUserDto): Promise<{ accessToken: string, refreshToken: string }> {
         const user = await this.userRepository.findUser({
-            where: {email: (loginData.email).toLowerCase()}
+            where: { email: (loginData.email).toLowerCase() }
         });
         if (!user) {
             throw new Error("Invalid credentials");
@@ -58,7 +58,7 @@ export class AuthService {
             throw new Error("Invalid credentials");
         }
 
-        const {accessToken, refreshToken} = generateAuthTokens(user.id, user.role, user.email)
+        const { accessToken, refreshToken } = generateAuthTokens(user.id, user.role, user.email)
 
         // --- save refresh token to DB ---//
         const tokenData: UserTokenDto = {
@@ -71,7 +71,7 @@ export class AuthService {
         Object.assign(token, tokenData);
         await this.userRepository.saveToken(token);
 
-        return {accessToken, refreshToken};
+        return { accessToken, refreshToken };
     }
 
     //  @ (Signout) -> clear refresh token from DB
@@ -142,7 +142,7 @@ export class AuthService {
             Object.assign(token, tokenData);
             await this.userRepository.saveToken(token);
 
-            await mailerUtil.sendVerificationEmail({userName: existingUser?.firstName as string, email: existingUser?.email as string, token: token.token as string});
+            await mailerUtil.sendVerificationEmail({ userName: existingUser?.firstName as string, email: existingUser?.email as string, token: token.token as string });
 
             console.log(`Verification code for ${data.email}: ${verificationCode}`);
 
@@ -188,50 +188,65 @@ export class AuthService {
     }
 
     // Authenticate or create a user with Google credentials
-    async authenticateGoogleUser(userData: GoogleUserDto): Promise<{ user: User, isNewUser: boolean, accessToken: string, refreshToken: string }> {
+    async authenticateGoogleUser(userData: GoogleUserDto): Promise<{ user: User | null, isNewUser: boolean, requiresCompletion: boolean, accessToken?: string, refreshToken?: string, tempUserData?: any }> {
         let user = await this.userRepository.findUser({
-            where: [{ email: userData.email }, { googleId: userData.googleId }]
+            where: [{ email: userData.email, googleId: userData.googleId }]
         });
 
-        console.log("existing user", user)
-
         let isNewUser = false;
+        let requiresCompletion = false;
 
         if (!user) {
+            // New Google user - return temp data for profile completion
             isNewUser = true;
-            const defaultLocation = { latitude: 0, longitude: 0 }; 
+            requiresCompletion = true;
 
-            const newUser = new User();
-            Object.assign(newUser, {
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                email: userData.email.toLowerCase(),
-                googleId: userData.googleId,
-                profilePicture: userData.profilePicture,
-                password: bcrypt.hashSync(Math.random().toString(36).slice(-8), 10), // Random password
-                role: "user",
-                user_source: "google",
-                isVerified: true,
-                status: "active",
-                lastDonationDate: null,
-                primaryLocation: createPoint(defaultLocation.latitude, defaultLocation.longitude),
-                lastKnownLocation: createPoint(defaultLocation.latitude, defaultLocation.longitude)
-            });
-
-            user = await this.userRepository.saveUser(newUser);
-        } else if (!user.googleId) {
-            user.googleId = userData.googleId;
-            user.isVerified = true;
-            user.user_source = "google";
-            if (userData.profilePicture && !user.profilePicture) {
-                user.profilePicture = userData.profilePicture;
+            return {
+                user: null,
+                isNewUser,
+                requiresCompletion,
+                tempUserData: {
+                    firstName: userData.firstName,
+                    lastName: userData.lastName,
+                    email: userData.email.toLowerCase(),
+                    googleId: userData.googleId,
+                    profilePicture: userData.profilePicture,
+                    user_source: "google"
+                }
+            };
+        } else {
+            // Existing user - check if profile is complete
+            if (!user.bloodGroup || !user.phone) {
+                requiresCompletion = true;
+                return {
+                    user,
+                    isNewUser: false,
+                    requiresCompletion,
+                    tempUserData: {
+                        firstName: userData.firstName,
+                        lastName: userData.lastName,
+                        email: userData.email.toLowerCase(),
+                        googleId: userData.googleId,
+                        profilePicture: userData.profilePicture
+                    }
+                };
             }
-            user = await this.userRepository.updateUser(user);
+
+            // Update Google info if needed
+            if (!user.googleId) {
+                user.googleId = userData.googleId;
+                user.isVerified = true;
+                user.user_source = "google";
+                if (userData.profilePicture && !user.profilePicture) {
+                    user.profilePicture = userData.profilePicture;
+                }
+                user = await this.userRepository.updateUser(user);
+            }
         }
 
-        // Generate & save tokens
+        //  save tokens - complete profiles
         const { accessToken, refreshToken } = generateAuthTokens(user.id, user.role, user.email);
-                const tokenData: UserTokenDto = {
+        const tokenData: UserTokenDto = {
             userID: user.id,
             token: refreshToken,
             type: "refresh"
@@ -241,6 +256,41 @@ export class AuthService {
         Object.assign(token, tokenData);
         await this.userRepository.saveToken(token);
 
-        return { user, isNewUser, accessToken, refreshToken };
+        return { user, isNewUser, requiresCompletion: false, accessToken, refreshToken };
+    }
+
+    async completeGoogleUserProfile(tempUserData: any, additionalData: { bloodGroup: string, phoneNumber: string, age: number, primaryLocation: { latitude: number, longitude: number } }): Promise<{ user: User, accessToken: string, refreshToken: string }> {
+        const defaultLocation = additionalData.primaryLocation || { latitude: 0, longitude: 0 };
+
+        const newUser = new User();
+        Object.assign(newUser, {
+            ...tempUserData,
+            bloodGroup: additionalData.bloodGroup,
+            phone: additionalData.phoneNumber,
+            age: additionalData.age,
+            password: bcrypt.hashSync(Math.random().toString(36).slice(-8), 10),
+            role: "user",
+            isVerified: true,
+            status: "active",
+            lastDonationDate: null,
+            primaryLocation: createPoint(defaultLocation.latitude, defaultLocation.longitude),
+            lastKnownLocation: createPoint(defaultLocation.latitude, defaultLocation.longitude)
+        });
+
+        const user = await this.userRepository.saveUser(newUser);
+
+        // Generate & save tokens
+        const { accessToken, refreshToken } = generateAuthTokens(user.id, user.role, user.email);
+        const tokenData: UserTokenDto = {
+            userID: user.id,
+            token: refreshToken,
+            type: "refresh"
+        };
+
+        const token = new Token();
+        Object.assign(token, tokenData);
+        await this.userRepository.saveToken(token);
+
+        return { user, accessToken, refreshToken };
     }
 }

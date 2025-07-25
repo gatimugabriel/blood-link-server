@@ -92,8 +92,6 @@ export class UserController {
             const { fcmToken } = req.body
             const userId = user?.userID as string
 
-            console.log(fcmToken, userId);
-
             const data = await this.userService.saveUserToken(userId, fcmToken, "fcm");
             res.status(201).json({ message: "FCM token saved", data });
         } catch (error) {
@@ -101,13 +99,19 @@ export class UserController {
         }
     }
 
-    async setLocation(req: ExtendedRequest, res: Response, next: NextFunction){
-        try{
-            console.log("User Location updated")
-            res.status(200).json({message: "User Location updated"})
-        }catch (e) {
-            console.error(e)
-            next(e)
+    async setLocation(req: ExtendedRequest, res: Response, next: NextFunction) {
+        try {
+            const { user } = req;
+            const { latitude, longitude } = req.body;
+            const userID = user?.userID as string;
+
+            console.log(latitude, longitude, userID);
+            
+            await this.userService.updateUserLocation(userID, latitude, longitude);
+            res.status(200).json({ message: "User location updated successfully" });
+        } catch (error) {
+            console.log("error", error);
+            next(error);
         }
     }
 
