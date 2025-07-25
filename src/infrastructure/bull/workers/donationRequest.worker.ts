@@ -7,6 +7,7 @@ import { redisConfig } from '../../../application/config/database.config';
 import { DB } from '../../database/data-source';
 import { DonationRepository } from '../../../domain/repositories/donationRepository';
 import { UserRepository } from '../../../domain/repositories/userRepository';
+import { Notification } from '../../../domain/entity/Notification';
 
 const donationRepository = new DonationRepository();
 const userRepository = new UserRepository();
@@ -39,20 +40,40 @@ async function processDonationRequest(job: Job) {
         const messageData = {
             title: 'New Donation Request!',
             subTitle: 'You have a new donation request nearby, save a life!',
+            requestId: requestData.requestID,
             body: {
                 bloodGroup: requestData.bloodGroup,
                 location: {
                     latitude: requestData.requestLocation.latitude,
                     longitude: requestData.requestLocation.longitude,
                 },
-                urgency: requestData.urgency
+                urgency: requestData.urgency,
+                requestId: requestData.requestID
             }
         }
 
         await notificationService.sendNotification(nearbyDonors, messageData);
+
+        // Save notifications to database for each donor
+        const notificationRepository = DB.getRepository(Notification);
+        const notificationPromises = nearbyDonors.map(async (donor) => {
+            const notification = new Notification();
+            notification.userID = donor.id;
+            notification.content = `New ${requestData.bloodGroup} blood donation request nearby - ${requestData.urgency} urgency`;
+            notification.status = 'sent';
+            notification.requestID = requestData.requestID;
+            notification.bloodGroup = requestData.bloodGroup;
+            notification.urgency = requestData.urgency;
+            notification.latitude = requestData.requestLocation.latitude;
+            notification.longitude = requestData.requestLocation.longitude;
+            return notificationRepository.save(notification);
+        });
+        
+        await Promise.all(notificationPromises);
+        console.log(`Saved ${nearbyDonors.length} notifications to database`);
     } catch (error) {
         console.error(`Error processing donation request ${donationRequest.id}:`, error);
-        throw error; // BullMQ will handle retries
+        throw error;
     }
 }
 

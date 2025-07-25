@@ -132,8 +132,31 @@ const resendEmailToUnverifiedUser = async (req: ExtendedRequest, res: Response, 
 }
 
 // --  DONATIONS -- //
+// Helper function to get location name from coordinates
+const getLocationName = async (latitude: number, longitude: number): Promise<string> => {
+    try {
+        const response = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${process.env.OPENCAGE_API_KEY}`);
+        const data: any = await response.json();
+        if (data?.results && data.results[0]) {
+            return data?.results[0].formatted;
+        }
+    } catch (error) {
+        console.error('Error getting location name:', error);
+    }
+    return `${latitude}, ${longitude}`; // Fallback to coordinates
+};
+
 // Donation Request
 const sendDonationRequestEmail = async (recipient: User, messageData: any) => {
+    const locationName = await getLocationName(
+        messageData.body.location.latitude, 
+        messageData.body.location.longitude
+    );
+    
+    const requestId = messageData.body.requestId || messageData.requestId || '';
+    const deepLink = `exp://192.168.1.104:8081/--/(root)/(tabs)/(requests)/${requestId}`; // Development build deep link
+    const webLink = `${process.env["WEB_CLIENT_ORIGIN"]}/requests/${requestId}`; // Web fallback
+    
     const htmlBody = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f4f4;">
         <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
@@ -144,13 +167,17 @@ const sendDonationRequestEmail = async (recipient: User, messageData: any) => {
             </p>
             <ul style="font-size: 16px; color: #333; list-style: none; padding: 0;">
                 <li><strong>Urgency:</strong> ${messageData.body.urgency}</li>
-                <li><strong>Location:</strong> ${messageData.body.location.latitude}, ${messageData.body.location.longitude}</li>
+                <li><strong>Location:</strong> ${locationName}</li>
                 <li><strong>Blood Group:</strong> ${messageData.body.bloodGroup}</li>
             </ul>
             <div style="text-align: center; margin: 20px 0;">
-                <a href="${process.env["MOBILE_CLIENT_ORIGIN"]}/donations/donate/confirm-availability" 
-                   style="background-color: #e63946; color: white; padding: 12px 20px; text-decoration: none; font-size: 16px; border-radius: 5px;">
-                   Confirm Your Availability
+                <a href="${deepLink}" 
+                   style="background-color: #e63946; color: white; padding: 12px 20px; text-decoration: none; font-size: 16px; border-radius: 5px; margin-right: 10px;">
+                   Open in App
+                </a>
+                <a href="${webLink}" 
+                   style="background-color: #666; color: white; padding: 12px 20px; text-decoration: none; font-size: 16px; border-radius: 5px;">
+                   View on Web
                 </a>
             </div>
             <p style="font-size: 14px; color: #333;">
