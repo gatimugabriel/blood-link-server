@@ -1,12 +1,12 @@
-import {donationRequestQueue} from "../../infrastructure/bull/queues";
-import {DonationRequest} from "../../domain/entity/DonationRequest";
-import {User} from "../../domain/entity/User";
-import {DonationRepository} from "../../domain/repositories/donationRepository";
-import {createPoint} from "../../utils/database";
-import {CreateDonationRequestDto} from "../dtos/donationRequestDto";
-import {BloodType} from "../../domain/value-objects/bloodType";
-import {UserRepository} from "../../domain/repositories/userRepository";
-import {Donation} from "../../domain/entity/Donation";
+import { donationRequestQueue } from "../../infrastructure/bull/queues";
+import { DonationRequest } from "../../domain/entity/DonationRequest";
+import { User } from "../../domain/entity/User";
+import { DonationRepository } from "../../domain/repositories/donationRepository";
+import { createPoint } from "../../utils/database";
+import { CreateDonationRequestDto, UpdateDonationRequestDto } from "../dtos/donationRequestDto";
+import { BloodType } from "../../domain/value-objects/bloodType";
+import { UserRepository } from "../../domain/repositories/userRepository";
+import { Donation } from "../../domain/entity/Donation";
 
 export class DonationRequestService {
     constructor(
@@ -42,13 +42,13 @@ export class DonationRequestService {
             // Check if the user has any open requests for themselves
             const existingRequests: DonationRequest[] = await this.donationRepository.findOpenRequestsByUser(data.userId);
             const hasOpenSelfRequest = existingRequests.some(item =>
-                item && item.requestFor === "self"
+                item && item.requestFor === "self" && item.status === "open"
             );
             if (hasOpenSelfRequest) {
                 throw new Error("You already have an open donation request for yourself. Please hang tight as we reach more donors.");
             }
 
-            const user = await this.userRepo.findUser({where: {id: data.userId}});
+            const user = await this.userRepo.findUser({ where: { id: data.userId } });
             if (!user) {
                 throw new Error("User not found");
             }
@@ -78,8 +78,41 @@ export class DonationRequestService {
         }
 
         // Add a job to the donation request queue to find & notify nearby donors
-        await donationRequestQueue.add('donationRequestJob', {requestData: jobData});
+        await donationRequestQueue.add('donationRequestJob', { requestData: jobData });
         return savedRequest;
+    }
+
+    // --- update donation request --- //
+    async updateDonationRequest(requestID: string, updateData: UpdateDonationRequestDto, userID?: string): Promise<DonationRequest> {
+        const existingRequest = await this.donationRepository.findRequestById(requestID);
+        if (!existingRequest) {
+            throw new Error("Donation request not found");
+        }
+
+        // ownership verification
+        if (userID && existingRequest.user.id !== userID) {
+            throw new Error("You are not authorized to update this request");
+        }
+
+        //  status transitions
+        if (updateData.status) {
+            const validStatuses = ['open', 'fulfilled', 'closed'];
+            if (!validStatuses.includes(updateData.status)) {
+                throw new Error("Invalid status. Valid statuses are: open, fulfilled, closed");
+            }
+
+            if (existingRequest.status === 'fulfilled' && updateData.status === 'open') {
+                throw new Error("Cannot reopen a fulfilled request");
+            }
+            if (existingRequest.status === 'closed' && updateData.status === 'open') {
+                throw new Error("Cannot reopen a closed request");
+            }
+        }
+
+        Object.assign(existingRequest, updateData);
+        existingRequest.updatedAt = new Date();
+
+        return await this.donationRepository.updateDonationRequest(existingRequest);
     }
 
     // --- get nearby donors --- //

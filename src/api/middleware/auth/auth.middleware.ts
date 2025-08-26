@@ -19,7 +19,7 @@ export const authenticate = async (
     }
 
     const decoded = validateToken(token, 'ACCESS')
-    if (!decoded?.userID) {        
+    if (!decoded?.userID) {
         res.status(401).json({
             success: false,
             message: `Invalid access Token`,

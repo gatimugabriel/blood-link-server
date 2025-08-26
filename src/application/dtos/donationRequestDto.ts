@@ -13,3 +13,13 @@ export interface CreateDonationRequestDto {
 
     requestingFor?: string // Defaults to 'self' 
 }
+
+export interface UpdateDonationRequestDto {
+    status?: 'open' | 'fulfilled' | 'closed';
+    urgency?: 'low' | 'medium' | 'high';
+    units?: number;
+    healthFacility?: string;
+    patientName?: string;
+    mobileNumber?: string;
+    stringRequestLocation?: string;
+}

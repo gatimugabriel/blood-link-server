@@ -34,7 +34,7 @@ export class NotificationController {
         try {
             const userID = req.user?.userID;
             const { id } = req.params;
-            console.log("incoming", id);
+            console.log("incoming notification", id);
 
             const notification = await this.notificationRepository.findOneBy({ id });
             if (!notification) {

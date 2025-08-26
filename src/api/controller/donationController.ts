@@ -1,10 +1,10 @@
-import {NextFunction, Request, Response} from "express";
-import {DB} from "../../infrastructure/database/data-source";
-import {Donation} from "../../domain/entity/Donation";
-import {ExtendedRequest} from "../../types/custom";
-import {DonationService} from "../../application/services/donationService";
-import {DonationRepository} from "../../domain/repositories/donationRepository";
-import {UserRepository} from "../../domain/repositories/userRepository";
+import { NextFunction, Request, Response } from "express";
+import { DB } from "../../infrastructure/database/data-source";
+import { Donation } from "../../domain/entity/Donation";
+import { ExtendedRequest } from "../../types/custom";
+import { DonationService } from "../../application/services/donationService";
+import { DonationRepository } from "../../domain/repositories/donationRepository";
+import { UserRepository } from "../../domain/repositories/userRepository";
 
 export class DonationController {
     private donationRepository = DB.getRepository(Donation);
@@ -19,13 +19,41 @@ export class DonationController {
     //--- Confirm Donor Availability to donate  ---//
     //   Prevents donor from being notified again within their donation timeframe
     async confirmDonorAvailability(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const {user} = req
+        const { user } = req
         const userID = user?.userID as string
-        const {requestID} = req.params
+        const { requestID } = req.params
+        const { scheduledDate } = req.body
 
         try {
-            const data = await this.service.confirmDonorAvailability(userID, requestID);
-            res.status(201).json({message: "Your availability has been confirmed successfully!", data});
+            // Validate scheduled date if provided
+            let validatedDate: Date | undefined;
+            if (scheduledDate) {
+                validatedDate = new Date(scheduledDate);
+                if (isNaN(validatedDate.getTime())) {
+                    return res.status(400).json({
+                        message: "Invalid date format provided"
+                    });
+                }
+
+                // Check if the date is in the future
+                const now = new Date();
+                if (validatedDate <= now) {
+                    return res.status(400).json({
+                        message: "Scheduled date must be in the future"
+                    });
+                }
+
+                // Check if the date is not too far in the future (e.g., max 30 days)
+                const maxFutureDate = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
+                if (validatedDate > maxFutureDate) {
+                    return res.status(400).json({
+                        message: "Scheduled date cannot be more than 30 days in the future"
+                    });
+                }
+            }
+
+            const data = await this.service.confirmDonorAvailability(userID, requestID, validatedDate);
+            res.status(201).json({ message: "Your availability has been confirmed successfully!", data });
         } catch (error) {
             next(error);
         }
@@ -33,7 +61,7 @@ export class DonationController {
 
     //--- Complete donation ---//
     async completeDonation(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const {donationID} = req.params;
+        const { donationID } = req.params;
 
         try {
             const donation = await this.service.completeDonation(donationID);
@@ -52,7 +80,7 @@ export class DonationController {
 
     //--- Cancel donation ---//
     async cancelDonation(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const {id} = req.params;
+        const { id } = req.params;
 
         try {
             const donation = await this.service.cancelDonation(id);
@@ -121,7 +149,7 @@ export class DonationController {
     //--- Get single donation ---//
     async getDonation(req: Request, res: Response, next: NextFunction) {
         try {
-            const {id} = req.params;
+            const { id } = req.params;
             const donation = await this.service.getDonation(id);
 
             if (!donation) {
@@ -140,8 +168,8 @@ export class DonationController {
     //--- Update donation status ---//
     async updateDonation(req: Request, res: Response, next: NextFunction) {
         try {
-            const {id} = req.params;
-            const {status} = req.body;
+            const { id } = req.params;
+            const { status } = req.body;
 
             const donation = await this.service.updateDonation(id, status);
 
@@ -152,6 +180,37 @@ export class DonationController {
                     id: donation.id,
                     status: donation.status
                 }
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    //--- Get donations by request ID ---//
+    async getDonationsByRequest(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { id } = req.params;
+            const donations = await this.service.getDonationsByRequest(id);
+
+            res.status(200).json({
+                data: donations,
+                count: donations.length
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    //--- Get current user's donations ---//
+    async getUserDonations(req: ExtendedRequest, res: Response, next: NextFunction) {
+        try {
+            const { user } = req;
+            const userID = user?.userID as string;
+            const donations = await this.service.getUserDonations(userID);
+
+            res.status(200).json({
+                data: donations,
+                count: donations.length
             });
         } catch (error) {
             next(error);

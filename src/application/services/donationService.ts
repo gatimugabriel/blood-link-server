@@ -19,7 +19,7 @@ export class DonationService {
     //@desc: This commits the donor to that request to avoid receiving notifications from other requests
     //      until they cancel the commitment OR donate and become feasible to donate again
     //@desc: It creates a new donation but with a status of 'scheduled'
-    async confirmDonorAvailability(userID: string, requestID: string) {
+    async confirmDonorAvailability(userID: string, requestID: string, scheduledDate?: Date) {
         // First check if user already has a scheduled donation
         const existingDonation = await this.donationRepository.findDonation({
             where: {
@@ -49,7 +49,8 @@ export class DonationService {
         donation.donor = { id: userID } as User
         donation.request = { id: requestID } as DonationRequest
         donation.status = 'scheduled'
-        donation.donationDate = new Date()
+        // Use provided scheduled date or current date as fallback
+        donation.donationDate = scheduledDate || new Date()
 
         const createdDonation = await this.donationRepository.createDonation(donation);
 
@@ -57,11 +58,15 @@ export class DonationService {
         try {
             const requester = request.user;
             if (requester.tokens && requester.tokens.length > 0) {
+                const donationDateStr = scheduledDate
+                    ? `scheduled for ${scheduledDate.toLocaleDateString()}`
+                    : 'immediately';
+
                 await this.notificationService.sendNotification(
-                    [{ tokens: requester.tokens} as User],
+                    [{ tokens: requester.tokens } as User],
                     {
                         title: "Donor Found!",
-                        subTitle: `${donor.firstName} ${donor.lastName} has confirmed availability to donate ${request.bloodGroup} blood`,
+                        subTitle: `${donor.firstName} ${donor.lastName} has confirmed availability to donate ${request.bloodGroup} blood ${donationDateStr}`,
                         id: `donor-confirmation-${createdDonation.id}`,
                         body: {
                             type: "DONOR_CONFIRMATION",
@@ -69,7 +74,8 @@ export class DonationService {
                             donorName: `${donor.firstName} ${donor.lastName}`,
                             bloodGroup: request.bloodGroup,
                             requestId: requestID,
-                            urgency: request.urgency
+                            urgency: request.urgency,
+                            scheduledDate: scheduledDate?.toISOString()
                         }
                     }
                 );
@@ -188,5 +194,33 @@ export class DonationService {
 
         donation.status = status;
         return await this.donationRepository.createDonation(donation);
+    }
+
+    //--- Get donations by request ID ---//
+    async getDonationsByRequest(requestID: string): Promise<Donation[]> {
+        const donations = await this.donationRepository.findManyDonations({
+            where: { request: { id: requestID } },
+            relations: {
+                donor: true,
+                request: true
+            },
+            order: { createdAt: 'DESC' }
+        });
+
+        return donations;
+    }
+
+    //--- Get user's donations ---//
+    async getUserDonations(userID: string): Promise<Donation[]> {
+        const donations = await this.donationRepository.findManyDonations({
+            where: { donor: { id: userID } },
+            relations: {
+                donor: true,
+                request: { user: true }
+            },
+            order: { createdAt: 'DESC' }
+        });
+
+        return donations;
     }
 }

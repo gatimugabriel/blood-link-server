@@ -104,8 +104,6 @@ export class UserController {
             const { user } = req;
             const { latitude, longitude } = req.body;
             const userID = user?.userID as string;
-
-            console.log(latitude, longitude, userID);
             
             await this.userService.updateUserLocation(userID, latitude, longitude);
             res.status(200).json({ message: "User location updated successfully" });
@@ -127,6 +125,23 @@ export class UserController {
             res.status(200).json(stats);
         } catch (error) {
             console.error('Error getting user stats:', error);
+            next(error);
+        }
+    }
+
+    /**
+     * Update user profile
+     */
+    async updateUser(req: ExtendedRequest, res: Response, next: NextFunction) {
+        try {
+            const { user } = req;
+            const userID = user?.userID as string;
+            const updateData = req.body;
+
+            const updatedUser = await this.userService.updateUserProfile(userID, updateData);
+            res.status(200).json(updatedUser);
+        } catch (error) {
+            console.error('Error updating user profile:', error);
             next(error);
         }
     }

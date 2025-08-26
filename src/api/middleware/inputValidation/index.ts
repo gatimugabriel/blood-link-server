@@ -1,5 +1,5 @@
-import {validationResult} from "express-validator";
-import {NextFunction, Request, Response} from "express";
+import { validationResult } from "express-validator";
+import { NextFunction, Request, Response } from "express";
 import {
     validateAddressInputs,
     validatePasswordInput,
@@ -9,21 +9,21 @@ import {
     validateEmailVerification,
     validateSignupInputs
 } from "./user";
-import {validateDonationRequestInput, validateDonationRequestInputForSomeoneElse} from "./bloodRequest";
+import { validateDonationRequestInput, validateDonationRequestInputForSomeoneElse, validateUpdateDonationRequest } from "./bloodRequest";
 
 
 const validate = (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).json({errors: errors.array()});
+        return res.status(422).json({ errors: errors.array() });
     }
     next();
 };
 
 const requireBody = (req: Request, res: Response, next: NextFunction) => {
-    if (!req.body || Object.keys(req.body).length === 0) {
-        res.status(400);
-        throw new Error("Request body is missing");
+    if (Object.keys(req.body).length === 0) {
+        return res.status(422).json({ message: "request body cannot be empty" });
+
     }
     next()
 }
@@ -41,6 +41,7 @@ const validationMiddleware = {
     // donation request
     validateDonationRequestInput,
     validateDonationRequestInputForSomeoneElse,
+    validateUpdateDonationRequest,
 
     validate, requireBody
 }

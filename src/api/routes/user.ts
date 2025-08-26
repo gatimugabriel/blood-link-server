@@ -3,6 +3,7 @@ import { UserController } from '../controller/userController';
 import validationMiddleware from "../middleware/inputValidation/index";
 import { authenticate } from "../middleware/auth/auth.middleware";
 import { validateCoords } from "../middleware/inputValidation/user";
+import { validateProfileUpdate } from "../middleware/inputValidation/profile";
 
 const router = Router()
 const userController = new UserController()
@@ -21,7 +22,9 @@ router.get('/range', [requireBody, ...validateRangeBody, validate], userControll
 
 //  -- User Profile Routes -- //
 router.get("/all", userController.listUsers.bind(userController))
-router.route('/').get(userController.getUser.bind(userController))
+router.route('/')
+  .get(userController.getUser.bind(userController))
+  .patch([requireBody, ...validateProfileUpdate, validate], userController.updateUser.bind(userController))
 router.get('/stats', userController.getUserStats.bind(userController))
 
 export default router;

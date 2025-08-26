@@ -97,10 +97,10 @@ export class DonationRepository {
                                                   u.id                                  AS user_id,
 --                                            u."lastKnownLocation",
 --                                            u."primaryLocation",
---                                               u."firstName",
---                                               u."lastName",
---                                               u.email,
---                                               u.phone,
+                                               u."firstName",
+                                               u."lastName",
+                                               u.email,
+                                               u.phone,
                                                   ST_Y(u."lastKnownLocation"::geometry) AS user_last_known_latitude,
                                                   ST_X(u."lastKnownLocation"::geometry) AS user_last_known_longitude,
                                                   ST_X(u."primaryLocation"::geometry)   AS user_primary_longitude,
@@ -355,6 +355,11 @@ export class DonationRepository {
         return this.donationRepo.findOne(options);
     }
 
+    // find many donations
+    async findManyDonations(options: any): Promise<Donation[]> {
+        return this.donationRepo.find(options);
+    }
+
     // Find donations with filters
     async findDonations(
         offset: number,
@@ -370,9 +375,6 @@ export class DonationRepository {
         requestId?: string,
         urgency?: string
     ): Promise<[Donation[], number]> {
-        console.log(urgency, bloodGroup);
-
-
         const queryBuilder = this.donationRepo.createQueryBuilder('donation')
             .select(['donation', 'donor.id', 'donor.firstName', 'donor.lastName', 'donor.email', 'donor.phone', 'donor.bloodGroup'])
             .leftJoin('donation.donor', 'donor')

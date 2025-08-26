@@ -48,7 +48,7 @@ export class DataSeedingService {
         for (let i = 0; i < donationRequests.length; i++) {
             try {
                 const requestData = donationRequests[i];
-                const user = users[i % users.length]; // Distribute requests among users
+                const user = users[i % (users.length - 16)]; // Distribute requests among users
                 
                 const requestLocationPoint = createPoint(
                     requestData.requestLocation.latitude,

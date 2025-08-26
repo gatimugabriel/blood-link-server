@@ -210,4 +210,24 @@ export class UserService {
         user.lastKnownLocation = createPoint(latitude, longitude) as any;
         await this.userRepository.updateUser(user);
     }
+
+    async updateUserProfile(userID: string, updateData: any): Promise<User> {
+        const user = await this.userRepository.findUser({ where: { id: userID } });
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        // Only update allowed fields
+        const allowedFields = ['firstName', 'lastName', 'phone', 'bloodGroup', 'age', 'profilePicture'];
+        const filteredData: any = {};
+        
+        allowedFields.forEach(field => {
+            if (updateData[field] !== undefined) {
+                filteredData[field] = updateData[field];
+            }
+        });
+
+        Object.assign(user, filteredData);
+        return await this.userRepository.updateUser(user);
+    }
 }

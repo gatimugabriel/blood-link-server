@@ -23,15 +23,24 @@ export class DonationRequestController {
             const data = await this.donationRequestService.createNewDonationRequest(requestData);
             res.status(201).json(data);
         } catch (error) {
+            console.log(error)
             next(error);
         }
     }
 
     async updateDonationRequest(req: ExtendedRequest, res: Response, next: NextFunction) {
-        const { requestID } = req.params
+        const { id } = req.params;
+        const { user } = req;
+        const userID = user?.userID as string;
+        const updateData = req.body;
+
         try {
-            // const data = await this.donationRequestService.updateDonationRequest(requestID);
-            res.status(200).json("to do!");
+            const data = await this.donationRequestService.updateDonationRequest(id, updateData, userID);
+            res.status(200).json({
+                status: 'success',
+                message: 'Donation request updated successfully',
+                data
+            });
         } catch (error) {
             next(error);
         }
@@ -52,7 +61,17 @@ export class DonationRequestController {
 
         try {
             const data = await this.donationRequestService.getDonationRequest(id);
-            res.status(200).json(data);
+            if (!data) {
+                return res.status(404).json({
+                    status: 'error',
+                    message: 'Donation request not found'
+                });
+            }
+            res.status(200).json({
+                status: 'success',
+                message: 'Donation request retrieved successfully',
+                data
+            });
         } catch (error) {
             next(error);
         }

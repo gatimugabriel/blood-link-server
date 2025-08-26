@@ -14,14 +14,16 @@ const controller = new DonationController()
 router.use(authenticate)
 
 router.post('/', [requireBody, validate]); // Creates a new donation wih status 'completed'
-router.post('/donate/confirm-availability/:requestID', controller.confirmDonorAvailability.bind(controller)) // Confirm donor's availability (Creates a Donation with  status 'scheduled')
-router.post('/donate/complete/:donationID', controller.completeDonation.bind(controller)) // Complete a scheduled donation
-router.post('/donate/cancel/:donationID', controller.cancelDonation.bind(controller)) // Cancel a scheduled donation
+router.post('/donate/confirm-availability/:requestID', controller.confirmDonorAvailability.bind(controller)) // confirm donor's availability (Creates a Donation with  status 'scheduled')
+router.post('/donate/complete/:donationID', controller.completeDonation.bind(controller)) // complete a scheduled donation
+router.post('/donate/cancel/:donationID', controller.cancelDonation.bind(controller)) // cancel a scheduled donation
 
 router.get('/', controller.getAllDonations.bind(controller)) // Get all donations
+router.get('/user/me', controller.getUserDonations.bind(controller)) // Get current user's donations
 router.route('/:id')
     .get(controller.getDonation.bind(controller))
     .patch(requireBody, [validate], controller.updateDonation.bind(controller))
     .delete()
+router.get('/by-request/:id', controller.getDonationsByRequest.bind(controller)) // Get donations by request ID
 
 export default router;

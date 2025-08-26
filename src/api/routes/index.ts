@@ -6,6 +6,7 @@ import donationRequestRoutes from "./donationRequest";
 import adminRoutes from "./admin";
 import dataSeedingRoutes from "./dataSeeding";
 import notificationRoutes from "./notification";
+import reportRoutes from "./reports";
 // import events from "../sse"
 
 const routes = (app: Express, base_api: string) => {
@@ -18,6 +19,7 @@ const routes = (app: Express, base_api: string) => {
     router.use('/admin', adminRoutes)
     router.use('/data', dataSeedingRoutes)
     router.use('/notification', notificationRoutes)
+    router.use('/reports', reportRoutes)
 
     //--- SSE Endpoints ---//
     // router.use('/sse', events)

@@ -103,20 +103,26 @@ export class AuthController {
             const user = await this.userRepo.findUser({ where: { email } })
             if (!user || (user.role).toUpperCase() !== 'ADMIN') {
                 res.status(401)
-                res.render('auth/login', {
-                    title: 'Admin Login',
-                    error: 'Insufficient Permissions. Access denied for this user.'
-                });
+                // res.render('auth/login', {
+                //     title: 'Admin Login',
+                //     error: 'Insufficient Permissions. Access denied for this user.'
+                // });
+                res.json({
+                    message: 'Insufficient Permissions. Access denied for this user.'
+                })
                 return
             }
 
             const isValid = await bcrypt.compare(password, user.password);
             if (!isValid) {
                 res.status(401)
-                res.render('auth/login', {
-                    title: 'Admin Login',
-                    error: 'Invalid credentials'
-                });
+                // res.render('auth/login', {
+                //     title: 'Admin Login',
+                //     error: 'Invalid credentials'
+                // });
+                res.json({
+                    message: 'Invalid credentials'
+                })
                 return
             }
 
@@ -135,12 +141,20 @@ export class AuthController {
                 maxAge: 24 * 60 * 60 * 1000
             });
 
-            res.redirect('/admin/donations');
+            // res.redirect('/admin/donations');
+            res.json({
+                message: 'Login successful',
+                accessToken,
+                refreshToken
+            })
         } catch (error) {
-            res.render('admin/auth/login', {
-                title: 'Admin Login',
-                error: 'An error occurred. Please try again.'
-            });
+            // res.render('admin/auth/login', {
+            //     title: 'Admin Login',
+            //     error: 'An error occurred. Please try again.'
+            // });
+            res.json({
+                message: 'An error occurred. Please try again.'
+            })
         }
     }
 
