@@ -6,8 +6,8 @@ dotenv.config()
 if (!process.env["ENCRYPTION_KEY"] || !process.env["ENCRYPTION_IV"]) {
     throw new Error("Encryption key or IV is not set in the environment variables");
 }
-const key = Buffer.from(process.env["ENCRYPTION_KEY"] as string, 'hex')
-const iv = Buffer.from(process.env["ENCRYPTION_IV"] as string, 'hex')
+const key = Buffer.from(process.env["ENCRYPTION_KEY"] as string, 'base64')
+const iv = Buffer.from(process.env["ENCRYPTION_IV"] as string, 'base64')
 
 //  returns an encrypted string
 //  input: payload of any type (string, object, array)

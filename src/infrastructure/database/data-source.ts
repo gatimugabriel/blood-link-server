@@ -10,7 +10,7 @@ import dotenv from "dotenv";
 
 dotenv.config()
 
-const { DB_HOST, DB_PORT, DB_USER, DB_USER_PASSWORD, DB_NAME, DB_SCHEMA, NODE_ENV } =
+const { DB_HOST, DB_PORT, DB_USER, DB_USER_PASSWORD, DB_NAME, DB_SCHEMA, NODE_ENV, SQL_LOG } =
     process.env;
 
 export const DB = new DataSource({
@@ -30,9 +30,9 @@ export const DB = new DataSource({
     connectTimeoutMS: 10000,
     schema: DB_SCHEMA,
 
-    synchronize: NODE_ENV !== "dev",
+    synchronize: NODE_ENV !== "development",
     //logging logs sql command on the terminal
-    logging: NODE_ENV == "development",
+    logging: SQL_LOG == "true",
     entities: [User, Token, DonationRequest, Donation, Notification, HealthFacility],
     migrations: [__dirname + "/infrastructure/database/migrations/*.ts"],
     subscribers: [],

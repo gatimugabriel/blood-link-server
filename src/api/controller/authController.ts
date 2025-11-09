@@ -1,12 +1,12 @@
+import bcrypt from "bcrypt";
 import { NextFunction, Request, Response } from "express";
+import { OAuth2Client } from 'google-auth-library';
 import { UserTokenDto } from "../../application/dtos/userDto";
 import { AuthService } from "../../application/services/authService";
 import { Token } from "../../domain/entity/User";
 import { UserRepository } from "../../domain/repositories/userRepository";
 import { ExtendedRequest } from "../../types/custom";
 import { generateAuthTokens } from "../../utils/token";
-import bcrypt from "bcrypt";
-import { OAuth2Client } from 'google-auth-library';
 
 export class AuthController {
     private readonly authService: AuthService;
@@ -23,7 +23,6 @@ export class AuthController {
             const user = await this.authService.createUser(req.body);
             const { accessToken, refreshToken } = generateAuthTokens(user.id, user.role, user.email)
 
-            // --- save refresh token to DB ---//
             const tokenData: UserTokenDto = {
                 userID: user.id,
                 token: refreshToken,
@@ -33,12 +32,19 @@ export class AuthController {
             Object.assign(token, tokenData);
             await this.userRepo.saveToken(token);
 
-            // set http-only cookies
             res.cookie('accessToken', accessToken, {
-                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+                httpOnly: true,
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 15 * 60 * 1000 // 15 minutes
             });
             res.cookie('refreshToken', refreshToken, {
-                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+                httpOnly: true,
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
             });
 
             res.status(201).json({ user, accessToken, refreshToken });
@@ -65,7 +71,6 @@ export class AuthController {
         }
     }
 
-
     async verifyMobileCode(req: Request, res: Response, next: NextFunction) {
         try {
             const isVerified = await this.authService.verifyCode(req.body);
@@ -82,12 +87,19 @@ export class AuthController {
     async signin(req: Request, res: Response, next: NextFunction) {
         try {
             const { accessToken, refreshToken } = await this.authService.authenticateUser(req.body);
-            // set http-only cookies
             res.cookie('accessToken', accessToken, {
-                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+                httpOnly: true,
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 15 * 60 * 1000 // 15 minutes
             });
             res.cookie('refreshToken', refreshToken, {
-                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+                httpOnly: true,
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
             });
 
             res.json({ accessToken, refreshToken });
@@ -113,7 +125,7 @@ export class AuthController {
                 return
             }
 
-            const isValid = await bcrypt.compare(password, user.password);
+            const isValid = await bcrypt.compareSync(password, user.password);
             if (!isValid) {
                 res.status(401)
                 // res.render('auth/login', {
@@ -128,32 +140,35 @@ export class AuthController {
 
             const { accessToken, refreshToken } = generateAuthTokens(user.id, user.role, user.email)
 
-            // Set cookies
             res.cookie('accessToken', accessToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                maxAge: 15 * 60 * 1000
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
+                maxAge: 15 * 60 * 1000 // 15 minutes
             });
 
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                maxAge: 24 * 60 * 60 * 1000
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
+                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
             });
 
-            // res.redirect('/admin/donations');
             res.json({
                 message: 'Login successful',
                 accessToken,
                 refreshToken
             })
-        } catch (error) {
+        } catch (error: Error | any) {
             // res.render('admin/auth/login', {
             //     title: 'Admin Login',
             //     error: 'An error occurred. Please try again.'
             // });
-            res.json({
-                message: 'An error occurred. Please try again.'
+            console.error("Admin login error:", error);
+            res.status(500).json({
+                message: (error as Error).message || 'An error occurred. Please try again.'
             })
         }
     }
@@ -164,9 +179,7 @@ export class AuthController {
         const { user } = req
 
         try {
-            // --- remove refresh token from DB --- //
             await this.authService.clearAuthCredentials(user?.userID as string, token);
-            // clear tokens in http-only cookies
             res.clearCookie("accessToken");
             res.clearCookie("refreshToken");
             res.status(200).json({ message: "Signed out!" });
@@ -186,11 +199,14 @@ export class AuthController {
                 next(new Error("Invalid refresh token"));
             }
 
-            // --- create a new access token  --- //
             const { accessToken } = generateAuthTokens(userID, user?.userRole as string, user?.email)
             res.clearCookie('accessToken')
             res.cookie('accessToken', accessToken, {
-                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+                httpOnly: true,
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 15 * 60 * 1000 // 15 minutes
             });
             res.status(200).json({ accessToken });
         } catch (error) {
@@ -205,7 +221,6 @@ export class AuthController {
                 return res.status(400).json({ error: 'ID token is required' });
             }
 
-            // Verify Google ID token
             const client = new OAuth2Client(process.env.GOOGLE_OAUTH_CLIENT_ID);
             const ticket = await client.verifyIdToken({
                 idToken,
@@ -231,12 +246,19 @@ export class AuthController {
                 return res.status(200).json(result);
             }
 
-            // Set cookies for complete profiles
             res.cookie('accessToken', result.accessToken, {
-                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+                httpOnly: true,
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 15 * 60 * 1000 // 15 minutes
             });
             res.cookie('refreshToken', result.refreshToken, {
-                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+                httpOnly: true,
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
             });
 
             res.status(200).json(result);
@@ -255,12 +277,19 @@ export class AuthController {
                 additionalData
             );
 
-            // Set cookies
             res.cookie('accessToken', accessToken, {
-                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+                httpOnly: true,
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 15 * 60 * 1000 // 15 minutes
             });
             res.cookie('refreshToken', refreshToken, {
-                httpOnly: true, sameSite: 'strict', path: '/', secure: process.env.NODE_ENV === "production",
+                httpOnly: true,
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
             });
 
             res.status(201).json({ user, accessToken, refreshToken });
